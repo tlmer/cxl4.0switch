@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Inventory the customer root-TB force statements and emit DUT bring-up
+subsets for one swdn + one EP.
+
+Source: $CXL3SW_HOME/top1/vdk_pcie_root_snps.v (the active root file in
+top1/top.f; there is no vdk_pcie_root.v in the customer tree).
+
+The force statements are testbench-only DUT configuration.  They must be
+reproduced in the RTL co-sim harness (or replaced by equivalent DBI writes);
+they are never embedded in the TLM model.  The generated .svh files assume
+the wrapper instance names `u_swdn` and `u_ep`.
+"""
+import os
+import re
+import sys
+
+ROOT = os.environ.get("CXL3SW_HOME", "/mnt/hgfs/g/cxl_sw33")
+SRC = os.path.join(ROOT, "top1", "vdk_pcie_root_snps.v")
+OUT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MANIFEST = os.path.join(OUT, "evidence", "P5", "P5_7_dut_docking",
+                        "forces_manifest.md")
+DUTD = os.path.join(OUT, "cosim", "cxl", "dut")
+SWDN = os.path.join(DUTD, "forces_swdn_dn0.svh")
+EP = os.path.join(DUTD, "forces_ep0.svh")
+
+CATEGORIES = [
+    ("fast_link_mode", "cfg_fast_link_mode"),
+    ("pl_g3r_194", "pl_g3r_194[0]"),
+    ("default_target", "default_target"),
+    ("mem_space_en", "cfg_mem_space_en"),
+    ("vendor_id", "vendor_id"),
+    ("device_id", "device_id"),
+    ("dsp_ecam", "cfg_dsp_ecam_en"),
+    ("type1_type0_disable", "cfg_type1_type0_disable"),
+    ("cxl_cache_dsp", "cfg_cxl_port_cache_enable_dsp"),
+    ("cxl_mem_dsp", "cfg_cxl_port_mem_enable_dsp"),
+    ("cxl_68b_dsp", "cfg_cxl_port_68B_flit_vh_enable_dsp"),
+    ("cxl_cache_usp", "cfg_cxl_port_cache_enable_usp"),
+    ("cxl_mem_usp", "cfg_cxl_port_mem_enable_usp"),
+    ("cxl_68b_usp", "cfg_cxl_port_68B_flit_vh_enable_usp"),
+    ("cxl_io", "cfg_cxl_port_io_enable"),
+]
+
+
+def category(line):
+    for name, needle in CATEGORIES:
+        if needle in line:
+            return name
+    return "other"
+
+
+def main():
+    with open(SRC, "r", encoding="utf-8", errors="replace") as f:
+        lines = f.readlines()
+    forces = []
+    for lineno, line in enumerate(lines, 1):
+        m = re.search(r"initial\s+force\s+([^;]+);", line)
+        if not m:
+            continue
+        target = m.group(1).strip()
+        forces.append((lineno, target, category(line)))
+    if not forces:
+        sys.stderr.write("[gen_cxl_dut_forces] no force statements in %s\n" % SRC)
+        return 1
+
+    groups = {}
+    for lineno, target, cat in forces:
+        path = target.split("=")[0].strip()
+        if path.startswith("vdk_pcie_root."):
+            path = path[len("vdk_pcie_root."):]
+        top = path.split(".")[0]
+        groups.setdefault(top, []).append((lineno, target, cat))
+
+    os.makedirs(os.path.dirname(MANIFEST), exist_ok=True)
+    with open(MANIFEST, "w", encoding="utf-8") as f:
+        f.write("# DUT force manifest (from `vdk_pcie_root_snps.v`)\n\n")
+        f.write("Source: `%s`\n\n" % SRC)
+        f.write("These are **testbench-only** DUT configuration forces.  The TLM model\n")
+        f.write("does not embed them; the co-sim wrapper must reproduce them (or the\n")
+        f.write("equivalent DBI writes must be issued before traffic).\n\n")
+        f.write("| group | forces | fast link | CXL cache/mem/flit/io | IDs | other |\n")
+        f.write("|---|---:|---:|---:|---:|---:|\n")
+        for top in sorted(groups):
+            items = groups[top]
+            c = [cat for _, _, cat in items]
+            f.write("| `%s` | %d | %d | %d | %d | %d |\n" % (
+                top, len(items), c.count("fast_link_mode") + c.count("pl_g3r_194"),
+                sum(1 for x in c if x.startswith("cxl_")),
+                c.count("vendor_id") + c.count("device_id"),
+                sum(1 for x in c if x == "other")))
+        f.write("\nTotal forces: **%d**\n\n" % len(forces))
+        f.write("## Signal categories\n\n")
+        counts = {}
+        for _, _, cat in forces:
+            counts[cat] = counts.get(cat, 0) + 1
+        for name, _ in CATEGORIES:
+            f.write("- `%s`: %d\n" % (name, counts.get(name, 0)))
+        if counts.get("other"):
+            f.write("- `other`: %d\n" % counts["other"])
+        f.write("\n## Full inventory\n\n| line | target | category |\n|---:|---|---|\n")
+        for lineno, target, cat in forces:
+            f.write("| %d | `%s` | %s |\n" % (lineno, target.replace("|", "\\|"), cat))
+
+    def emit(path, prefix, instance, title):
+        selected = []
+        p = prefix + "."
+        for lineno, target, cat in forces:
+            lhs = target.split("=")[0].strip()
+            if lhs.startswith("vdk_pcie_root." + p):
+                new = lhs.replace("vdk_pcie_root." + p, instance + ".", 1)
+                rhs = target.split("=", 1)[1].strip()
+                selected.append((lineno, new, rhs, cat))
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("// AUTO-GENERATED by tools/gen_cxl_dut_forces.py -- do not edit.\n")
+            f.write("// %s\n" % title)
+            f.write("// Source: %s\n" % SRC)
+            f.write("// Testbench-only DUT bring-up; not part of the TLM model.\n")
+            f.write("initial begin\n")
+            for lineno, lhs, rhs, cat in selected:
+                f.write("    // source line %d (%s)\n" % (lineno, cat))
+                f.write("    force %s = %s;\n" % (lhs, rhs))
+            f.write("end\n")
+        return len(selected)
+
+    n_swdn = emit(SWDN, "sw_top.sw_phy_dn0", "u_swdn",
+                  "Forces for one swdn_cxl DUT instance (downstream port 0).")
+    n_ep = emit(EP, "ep_phy0", "u_ep",
+                "Forces for one EP DUT instance (EP0).")
+    print("[gen] %d force statements, %d groups" % (len(forces), len(groups)))
+    print("[gen] %s" % MANIFEST)
+    print("[gen] %s (%d forces)" % (SWDN, n_swdn))
+    print("[gen] %s (%d forces)" % (EP, n_ep))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

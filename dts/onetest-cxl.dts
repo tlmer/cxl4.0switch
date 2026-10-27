@@ -1,0 +1,17 @@
+// onetest CXL switch model -- DTS template (checklist T1).
+// Change this file to change the model profile without recompiling:
+//   onetest,num-ports       : 1..32 downstream swdn ports
+//   onetest,hdm-base        : HDM region base (informational)
+//   onetest,bar0-base       : first BAR0 base used by enumeration
+//   onetest,mailbox-payload : 256/512/1024 bytes
+//   onetest,flit-mode       : "68b" | "256b" | "pbr"
+/dts-v1/;
+
+/ {
+    compatible = "onetest,cxl-switch";
+    onetest,num-ports = <4>;
+    onetest,hdm-base = <0x80000000>;
+    onetest,bar0-base = <0x80000000>;
+    onetest,mailbox-payload = <1024>;
+    onetest,flit-mode = "68b";
+};
