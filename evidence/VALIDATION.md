@@ -14,7 +14,7 @@ Model-side verification completed 2026-10-27 on Linux x86_64 with g++ 8.5.
 | Force manifest | 94 force statements classified; per-DUT subsets generated |
 | Console | `--run-all` PASS; `--tc all` PASS (18 cases) |
 | Independent library smoke | `SMOKE_CXL: ALL PASS` using `include/` + `lib/` only |
-| Delivery library | 31 objects / 36 public headers; English and path-leak gates clean |
+| Delivery library | 32 objects / 37 public headers; English and path-leak gates clean |
 
 MODEL_TRACE classes observed in a full run: STAGE, IRQ, EXC, ERR, RESULT, SUM.
 
@@ -23,6 +23,11 @@ MODEL_TRACE classes observed in a full run: STAGE, IRQ, EXC, ERR, RESULT, SUM.
 - Customer `swdn` + EP DUT RTL co-simulation (M6.2-M6.7) and the full DPI
   bridge: pending customer environment.  Model-side docking vectors, port
   check, force subsets and wrapper are complete.
+- Local model-to-DUT bring-up (clean standard controller + the supplied
+  endpoint wrapper) passes PCIe link-up, CXL.io configuration reads, CXL.mem
+  M2S/S2M traffic, and DBI configuration through the port adapter; this is an
+  internal integration result and does not replace customer-environment
+  co-simulation.
 - Customer RTL PBR/256B profile: the delivered CTL configuration has PBR
   disabled; the model spec profile is validated.
 - PHY electrical/link training/CRC/retry, physical media poison path,
