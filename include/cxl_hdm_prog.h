@@ -20,6 +20,10 @@ struct CxlHdmRegion {
     int port = 0;
     std::uint64_t base = 0;
     std::uint64_t size = 0;
+    // Cascaded-switch path below `port`: path[0] is the child DSP port,
+    // path[1] the grandchild DSP port, and so on.  Empty = endpoint directly
+    // below the top DSP.
+    std::vector<int> path;
 };
 
 // Programs DSP/USP/root decoders for every region.  Fails (with a reason) on

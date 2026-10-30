@@ -48,6 +48,21 @@ struct CxlUioGimGroup {
     std::uint64_t reads = 0, writes = 0;
 };
 
+// F4: configurable GIM internal address translation / GFD mapping.
+// A GIM window (gim_id + [base, base+size)) is translated to a target GIM
+// region starting at target_base; gfd is the implementation-specific GFD
+// selector carried with the translated access.  Without a mapping entry the
+// historical GIM ID + offset behavior is used (identity).
+struct CxlUioGimMap {
+    std::uint16_t gim_id = 0;
+    std::uint64_t base = 0;
+    std::uint64_t size = 0;
+    std::uint16_t target = 0;
+    std::uint64_t target_base = 0;
+    std::uint16_t gfd = 0;
+    bool valid = false;
+};
+
 struct CxlUioSystem {
     CxlPbrFabric* fabric = nullptr;
     bool pbr_mode = true;
@@ -60,11 +75,20 @@ struct CxlUioSystem {
     std::vector<CxlUioFastSeg> fast;
     std::map<std::uint16_t, CxlUioGim> gim;
     std::map<std::uint16_t, CxlUioGimGroup> gim_groups;
+    std::vector<CxlUioGimMap> gim_map;              // F4
+    // F5: full 4-Kb GMV/VTV register tables (512 bytes per VCS / per VCS+LD).
+    std::map<std::uint8_t, std::vector<std::uint8_t>> gmv_table;
+    std::map<std::pair<std::uint8_t, std::uint8_t>,
+             std::vector<std::uint8_t>> vtv_table;
+    std::map<std::pair<std::uint16_t, std::uint16_t>, std::uint16_t> gmv_flags;
+    std::map<std::pair<std::uint8_t, std::pair<std::uint8_t, std::uint16_t>>,
+             std::uint16_t> vtv_flags;
 
     std::uint64_t uio_reads = 0, uio_writes = 0;
     std::uint64_t gim_reads = 0, gim_writes = 0;
     std::uint64_t denied_gmv = 0, denied_vtv = 0, unsupported = 0;
     std::uint64_t fast_misses = 0, bounds_errors = 0, fabric_errors = 0;
+    std::uint64_t map_misses = 0, map_errors = 0, table_errors = 0;
 
     void init(CxlPbrFabric* f = nullptr, bool pbr = true);
     bool add_gmv(std::uint16_t pid, std::uint16_t dpid, std::string* err = nullptr);
@@ -80,6 +104,45 @@ struct CxlUioSystem {
                        std::uint8_t ways, std::uint64_t gran,
                        const std::vector<std::uint16_t>& targets,
                        std::string* err = nullptr);
+    // F4: add a GIM internal translation window.
+    bool add_gim_map(std::uint16_t gim_id, std::uint64_t base, std::uint64_t size,
+                     std::uint16_t target, std::uint64_t target_base,
+                     std::uint16_t gfd = 0, std::string* err = nullptr);
+    // F4: translate an access through the mapping table (identity if no map).
+    bool gim_translate(std::uint16_t gim_id, std::uint64_t off,
+                       std::uint16_t* target_gim, std::uint64_t* target_off,
+                       std::uint16_t* gfd, std::string* err = nullptr) const;
+
+    // F5: full 4-Kb GMV/VTV register-table access.
+    bool set_gmv_bit(std::uint8_t vcs_id, std::uint16_t pid, bool enable,
+                     std::string* err = nullptr);
+    bool set_vtv_bit(std::uint8_t vcs_id, std::uint8_t ld_id,
+                     std::uint16_t dpid, bool enable,
+                     std::string* err = nullptr);
+    bool gmv_bit(std::uint8_t vcs_id, std::uint16_t pid) const;
+    bool vtv_bit(std::uint8_t vcs_id, std::uint8_t ld_id,
+                 std::uint16_t dpid) const;
+    bool read_gmv_table(std::uint8_t vcs_id, std::uint64_t start,
+                        std::uint64_t len, std::vector<std::uint8_t>* out,
+                        std::string* err = nullptr) const;
+    bool read_vtv_table(std::uint8_t vcs_id, std::uint8_t ld_id,
+                        std::uint64_t start, std::uint64_t len,
+                        std::vector<std::uint8_t>* out,
+                        std::string* err = nullptr) const;
+    bool write_gmv_table(std::uint8_t vcs_id, std::uint64_t start,
+                         const std::vector<std::uint8_t>& data,
+                         std::string* err = nullptr);
+    bool write_vtv_table(std::uint8_t vcs_id, std::uint8_t ld_id,
+                         std::uint64_t start,
+                         const std::vector<std::uint8_t>& data,
+                         std::string* err = nullptr);
+    void set_gmv_flags(std::uint16_t pid, std::uint16_t dpid,
+                       std::uint16_t flags);
+    void set_vtv_flags(std::uint8_t vcs_id, std::uint8_t ld_id,
+                       std::uint16_t dpid, std::uint16_t flags);
+    std::uint16_t gmv_flags_of(std::uint16_t pid, std::uint16_t dpid) const;
+    std::uint16_t vtv_flags_of(std::uint8_t vcs_id, std::uint8_t ld_id,
+                               std::uint16_t dpid) const;
     void set_gmv_version(std::uint16_t pid, std::uint16_t version);
     void set_vtv_version(std::uint8_t vcs_id, std::uint8_t ld_id,
                          std::uint16_t version);

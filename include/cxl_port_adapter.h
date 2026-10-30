@@ -40,6 +40,8 @@ struct CxlSwdnBackend {
     virtual bool mem_write(std::uint64_t dpa, const void* src, std::size_t n,
                            std::string* err = nullptr) = 0;
     virtual CxlMailbox* mailbox() = 0;
+    // Null when the HDM is owned outside the model (customer RTL).
+    virtual CxlHdm* device_hdm() { return nullptr; }
     virtual std::uint64_t errors() const = 0;
 };
 
@@ -66,6 +68,7 @@ struct CxlTlmStubBackend : CxlSwdnBackend {
     bool mem_write(std::uint64_t dpa, const void* src, std::size_t n,
                    std::string* err) override;
     CxlMailbox* mailbox() override { return &mbx; }
+    CxlHdm* device_hdm() override { return &hdm; }
     std::uint64_t errors() const override { return error_count; }
 };
 

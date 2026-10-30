@@ -28,7 +28,15 @@ struct CxlLinuxProxy {
     std::vector<CxlType3Commands> dev;
     CxlDeviceTree tree;
     std::string log;
+    std::string kernel_log;        // Linux-driver-style raw lines (opt-in)
+    bool kernel_log_on = false;
+    std::uint64_t kernel_seq = 0;  // emulated dmesg timestamp (microseconds)
     bool ready = false;
+
+    // Emit Linux cxl_* driver-style raw lines in addition to the [TAG] log.
+    // These are model-emitted prints that follow the kernel message shapes;
+    // they are not captured from a real kernel.
+    void set_kernel_log(bool v) { kernel_log_on = v; }
     CxlPerfWindow perf_mem;
     CxlPerfWindow perf_cfg;
 

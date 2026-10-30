@@ -23,6 +23,17 @@ namespace cxl_tlm {
 
 enum class CxlVppbPowerState : std::uint8_t { OFF = 0, RAMPING = 1, ON = 2 };
 
+// F3: configurable board/rail slot power timing.  Each rail becomes good
+// delay_ticks + ramp_ticks + power_good_ticks after the power-on request;
+// PERST# is released reset_ticks after the last rail is good.
+struct CxlVppbPowerRail {
+    std::string name;
+    std::uint32_t delay_ticks = 0;
+    std::uint32_t ramp_ticks = 0;
+    std::uint32_t power_good_ticks = 0;
+    std::uint32_t good_at() const { return delay_ticks + ramp_ticks + power_good_ticks; }
+};
+
 struct CxlVppbConfig {
     // ---- PCI Type 1 configuration header -----------------------------------
     std::uint16_t vendor_id = 0x1E98, device_id = 0x0002;
@@ -73,12 +84,36 @@ struct CxlVppbConfig {
     std::uint32_t msi_addr_lo = 0, msi_addr_hi = 0, msi_data = 0;
     std::uint32_t msi_mask = 0, msi_pending = 0;
 
+    // ---- F2: PCIe extended capability surface (AER/ATS/ACS/SR-IOV) --------
+    // AER @0x100, ATS @0x140, ACS @0x150, SR-IOV @0x160.
+    std::uint32_t aer_uc_status = 0, aer_uc_mask = 0, aer_uc_severity = 0;
+    std::uint32_t aer_c_status = 0, aer_c_mask = 0;
+    std::uint32_t aer_cap_ctl = 0;            // bit0 ECRC gen, bit1 ECRC check
+    std::uint32_t aer_hdr_log[4] = {0, 0, 0, 0};
+    std::uint32_t aer_root_cmd = 0, aer_root_status = 0, aer_err_source = 0;
+    std::uint64_t aer_injected = 0;
+    std::uint16_t ats_ctl = 0;                // bit0 enable, [7:1] STU
+    std::uint64_t ats_inval_req = 0, ats_inval_cpl = 0;
+    std::uint16_t acs_ctl = 0;                // V/B/R/C/U + egress control
+    std::uint64_t acs_redirects = 0;
+    std::uint16_t sriov_ctl = 0;              // bit0 VF enable, bit1 migration
+    std::uint16_t sriov_status = 0;
+    std::uint16_t sriov_initial_vfs = 0, sriov_total_vfs = 0;
+    std::uint16_t sriov_vf_offset = 0, sriov_vf_stride = 0;
+    std::uint16_t sriov_vf_device_id = 0, sriov_support_page = 0;
+    std::uint32_t sriov_vf_bar0 = 0;
+    std::uint64_t sriov_vf_enables = 0;
+
     // ---- Slot power / presence state --------------------------------------
     bool present = true;
     bool power_on = true;
     CxlVppbPowerState power_state = CxlVppbPowerState::ON;
     std::uint32_t power_ramp_ticks = 0;    // 0 => immediate power-on
     std::uint32_t ramp_remaining = 0;
+    std::vector<CxlVppbPowerRail> power_rails;   // F3 (empty => legacy ramp)
+    std::uint32_t power_reset_ticks = 0;         // PERST# release after last rail
+    std::uint32_t power_total_ticks = 0;         // computed for this power-on
+    std::uint32_t power_rails_good = 0;          // observability
     std::uint64_t presence_events = 0, power_events = 0;
     std::uint64_t power_faults = 0, power_denied = 0;
     std::uint64_t command_completions = 0;
@@ -93,6 +128,20 @@ struct CxlVppbConfig {
     bool slot_interrupt_pending() const;     // per-event enable + HPIE/CCIE
     void set_power_fault(bool fault);
     bool set_power_request(bool on, std::string* err = nullptr);
+    // F2: extended-capability behavior hooks.
+    void inject_aer(bool correctable, std::uint32_t bits);
+    void set_aer_header_log(const std::uint32_t dw[4]);
+    bool acs_p2p_allowed() const;             // !P2P Request Redirect
+    void ats_invalidate();                    // request + completion counters
+    bool sriov_set_vf_enable(bool enable);
+    // F3: rail/board timing configuration.  Max 8 rails.
+    bool add_power_rail(const std::string& name, std::uint32_t delay_ticks,
+                        std::uint32_t ramp_ticks, std::uint32_t power_good_ticks,
+                        std::string* err = nullptr);
+    void clear_power_rails();
+    void set_power_reset_ticks(std::uint32_t ticks);
+    std::uint32_t power_timeline_ticks() const;   // total for the last request
+    std::uint32_t power_rails_good_count() const { return power_rails_good; }
 };
 
 struct CxlMldDvsec {

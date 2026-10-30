@@ -17,18 +17,35 @@ This file is the customer-facing boundary statement.  A `SKIP` or
 
 ## Not supported / explicit boundaries
 
-1. **NTB and DM** are out of scope by project decision; they are excluded from
-   the CXL build and regression.
-2. **Full PCIe extended capability surface inside vPPB** (AER/ATS/ACS/ECRC/
-   SR-IOV/etc.).  Only the PM, PCIe, Slot, Link, and MSI capabilities needed by
-   the vPPB model are implemented; unimplemented registers read zero.
-3. **Vendor-specific slot power timing.**  Power sequencing is modeled with
-   `power_ramp_ticks`; real rails and board timing are not modeled.
-4. **GIM internal address translation/GFD mapping.**  CXL defines this as
-   implementation-specific; the model uses GIM ID + offset.
-5. **Full GMV/VTV register-table layout.**  The model implements the 4-Kb
-   vectors, versions, FAST/GIM interleave, and authorization checks; every
-   vendor-specific table field is not implemented.
+1. **NTB and DM (implemented F1a/F1b, minimal model-defined scope).**  The
+   CXL switch owns a minimal NTB function block (`cxl_ntb`: 4 symmetric
+   translation windows, doorbell, 8x32-bit scratchpad, explicit
+   out-of-window misses) and a minimal DM v1 endpoint (`cxl_dm`: identify,
+   status, health, error log, warm/cold reset, FM-owned mode; unknown
+   opcodes return Unsupported).  The DM command set is model-defined and not
+   the full vendor management API.
+2. **Full PCIe extended capability surface inside vPPB (implemented F2).**
+   The vPPB now exposes AER (status/mask/severity/ECRC/header log/root
+   status), ATS (enable/STU + invalidation counters), ACS (control + P2P
+   redirect check) and SR-IOV (VF count/offset/stride/enable) at
+   0x100/0x140/0x150/0x160, in addition to PM/PCIe/Slot/Link/MSI.  Remaining
+   extended-capability registers still read zero.
+3. **Vendor-specific slot power timing (implemented F3).**  Power sequencing
+   now supports a configurable per-rail/board timing table (`add_power_rail`:
+   delay + ramp + power-good per rail, plus a reset-release window) and
+   exposes rail-good progress.  Real electrical rails are still not modeled;
+   the timing table is the configurable board view.
+4. **GIM internal address translation/GFD mapping (implemented F4).**  The
+   model now supports a configurable GIM window translation table
+   (`add_gim_map`: GIM ID + window + target GIM + target offset + GFD).  With
+   no map the historical GIM ID + offset identity behavior is used.  The
+   vendor-specific GFD routing semantics beyond the selector value remain
+   implementation-defined.
+5. **Full GMV/VTV register-table layout (implemented F5).**  The model now
+   exposes the full 4-Kb GMV/VTV tables (512-byte vectors per VCS / per
+   VCS+LD), versions, permission/interleave flag words, bit set/clear, slice
+   read/write and out-of-range errors, in addition to the set-based
+   authorization checks.  Vendor-specific flag-bit meanings are model-defined.
 6. **Vendor advanced-congestion algorithm.**  The congestion metric is an input
    and `secondary_penalty` is a model approximation; the vendor algorithm is
    not reverse-engineered.
@@ -66,3 +83,15 @@ This file is the customer-facing boundary statement.  A `SKIP` or
 - Red variants must fail with the documented signature (see `evidence/`).
 - DUT co-simulation and RTL-profile items remain `PENDING`/`SKIP` until the
   customer environment is available.
+
+## Validation interfaces
+
+- `--kernel-log` / `klog on`: kernel-style CXL raw prints for
+  discovery/HDM/mailbox/memory/event/poison/PM, reproduced by the no-OS Linux
+  proxy.  They are model prints in the same format as the kernel messages,
+  not real `dmesg` output.
+- `cxl_stimu_ex` / `ep_stimu_ex` are local stimulus examples (not published).
+  They drive every 68B CXL.mem/CXL.cache opcode with per-channel credits and
+  tag/UQID/CQID checks; on the real SW + EP pair the run ends with
+  `W6_SIM: PASS` (344 messages per side, `tag_err=0`; evidence
+  `evidence/M6/W6_real_sw_ep/`).

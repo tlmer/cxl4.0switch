@@ -12,6 +12,9 @@ template, and validation artifacts.
 ## Highlights
 
 - CXL.io configuration/MMIO/events; CXL.mem 68B/256B/PBR, HDM, BE, poison/NXM
+- Complete PCIe configuration base (Type0/Type1, BAR sizing/MSE, standard and
+  extended capability chains) and endpoint/cascaded-switch enumeration
+  (model-side; the endpoint/cascade HDM path is verified through the model)
 - CXL.cache Type-2 MESI, multi-device directory, CQID out-of-order, LRU limits
 - PBR: PTH, SPID/DPID, FAST/LDST/IDT, Direct P2P, multi-level fabric/ISL/G-FAM
 - PBR switch CCI, RGT 256 / Table 7-87 mix and advanced congestion avoidance
@@ -22,7 +25,7 @@ template, and validation artifacts.
   events, poison, regions, memory tasks, PM
 - Validation interfaces: DTS, testcase channel, ioctl ABI, `MODEL_TRACE`,
   coverage report, performance windows, console utilities
-- Configurable ports `N = 1..32`; NTB and DM are out of scope
+- Configurable ports `N = 1..32`; NTB/DM minimal model-defined scope (F1a/F1b)
 - The only RTL in this repository is the port adapter/tie-off/DPI stub.
   PHY/link training/DLL retry belong to the downstream CTL RTL.
 

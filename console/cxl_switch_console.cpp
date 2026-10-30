@@ -112,13 +112,16 @@ int console_tc(const std::string& line) {
 int main(int argc, char** argv) {
     std::string dts_path;
     bool batch = false;
+    bool kernel_log = false;
     int batch_rc = 0;
 
     cxl_tlm::CxlLinuxProxy proxy;
     std::string err;
     // Parse options that affect initialization first.
-    for (int i = 1; i < argc; ++i)
+    for (int i = 1; i < argc; ++i) {
         if (!std::strcmp(argv[i], "--dts") && i + 1 < argc) dts_path = argv[++i];
+        else if (!std::strcmp(argv[i], "--kernel-log")) kernel_log = true;
+    }
 
     if (!dts_path.empty()) {
         cxl_tlm::CxlDtsConfig cfg;
@@ -133,6 +136,7 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "init failed: %s\n", err.c_str());
         return 1;
     }
+    proxy.set_kernel_log(kernel_log);
     proxy.acpi_view();
 
     for (int i = 1; i < argc; ++i) {
@@ -177,7 +181,8 @@ int main(int argc, char** argv) {
             std::printf("discover ls lspci cxl list hdm region mbox <port> "
                         "read <port> <off> write <port> <off> <hex,...> "
                         "event <port> poison <port> perf trace on|off|reset "
-                        "cover run all tc list|run <id|all> [n]|cover quit\n");
+                        "klog on|off|show cover run all "
+                        "tc list|run <id|all> [n]|cover quit\n");
             continue;
         }
         if (line == "quit" || line == "exit") break;

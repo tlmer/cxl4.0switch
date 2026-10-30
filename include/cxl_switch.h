@@ -7,6 +7,8 @@
 //   DSP_i.sec (customer EP DUT / TLM stub).
 // -----------------------------------------------------------------------------
 #pragma once
+#include "cxl_dm.h"
+#include "cxl_ntb.h"
 #include "cxl_swdn_port.h"
 #include "cxl_usp.h"
 
@@ -16,9 +18,22 @@
 
 namespace cxl_tlm {
 
+struct CxlSwdnBackend;                      // cxl_port_adapter.h
+
 struct CxlSwitch {
     CxlUsp usp;
     std::vector<CxlSwdnPort> ports;
+    // Bus number of this switch's USP (0 for the root-visible switch).
+    std::uint8_t base_bus = 0;
+    // Optional model endpoints below each DSP.  When present, configuration
+    // accesses below a DSP are routed to that endpoint; when absent the
+    // access is UR (external customer EP DUT / TLM stub).
+    std::vector<CxlSwdnBackend*> ep_backends;
+    // Optional cascaded switch below a DSP.  Its USP is a Type1 function at
+    // the DSP's secondary bus; the enumerator walks it recursively.
+    std::vector<CxlSwitch*> child_switches;
+    CxlNtb ntb;                             // F1a: NTB function block
+    CxlDm dm;                               // F1b: minimal management endpoint
     std::uint8_t internal_bus = 1;
 
     // Statistics (never silent).
@@ -38,6 +53,15 @@ struct CxlSwitch {
     // Returns the destination port and DPA.  src_port = -1 for upstream (root).
     bool mem_route(std::uint64_t hpa, int src_port, int* dst_port,
                    std::uint64_t* dpa, std::string* err = nullptr) const;
+    // Same, but also resolves the final model endpoint backend through
+    // cascaded switches (backend = nullptr when the endpoint is external).
+    bool mem_route_backend(std::uint64_t hpa, int src_port, int* dst_port,
+                           std::uint64_t* dpa, CxlSwdnBackend** backend,
+                           std::string* err = nullptr) const;
+
+    // Device HDM of the model endpoint below a DSP (nullptr for an external
+    // endpoint).  Used by device -> DSP -> USP -> root HDM programming.
+    CxlHdm* device_hdm(int port) const;
 };
 
 } // namespace cxl_tlm
