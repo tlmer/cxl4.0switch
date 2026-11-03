@@ -18,6 +18,7 @@
 //   tracking beyond the single outstanding request used by this model.
 // -----------------------------------------------------------------------------
 #pragma once
+#include "cxl_axi_master.h"
 #include "cxl_core_cfg.h"
 #include "cxl_msg.h"
 
@@ -91,6 +92,11 @@ std::string cxl_cache_msg_string(CxlCacheChan ch, const CxlCacheFields& f);
 struct CxlCacheHome {
     std::map<std::uint64_t, std::array<std::uint8_t, 64>> mem;
     std::map<std::uint64_t, CxlCacheState> state;    // host-side line state
+    // Optional external host DDR.  When attached, every home-memory line read
+    // or write is an AXI4 burst on the model's 128-bit master port.  The map
+    // above then remains a software shadow only (used by the legacy profile).
+    CxlAxiMaster* axi = nullptr;
+    mutable std::uint64_t axi_reads = 0, axi_writes = 0, axi_errors = 0;
     std::uint64_t reads = 0, writes = 0, snoops = 0, writebacks = 0;
     std::uint64_t wire_msgs = 0, wire_errors = 0;
 
@@ -122,6 +128,7 @@ struct CxlCacheSystem {
     bool fault_wrong_mesi = false;
 
     bool init(CxlFlitMode m = CxlFlitMode::B68, std::string* err = nullptr);
+    void attach_axi(CxlAxiMaster* m) { home.axi = m; }
 
     // Device-side operations.
     bool cpu_read(std::uint64_t addr, void* out, std::string* err = nullptr);
@@ -191,6 +198,7 @@ struct CxlCacheMultiSystem {
     bool fault_skip_writeback = false;
 
     bool init(int n, CxlFlitMode m = CxlFlitMode::B68, std::string* err = nullptr);
+    void attach_axi(CxlAxiMaster* m) { home.axi = m; }
 
     bool dev_read(int id, std::uint64_t addr, void* out, std::string* err = nullptr);
     bool dev_read_own(int id, std::uint64_t addr, void* out, std::string* err = nullptr);

@@ -12,6 +12,7 @@
 //   recorded as a SKIP, never silently dropped.
 // -----------------------------------------------------------------------------
 #pragma once
+#include "cxl_root_complex.h"
 #include "cxl_switch.h"
 
 #include <cstdint>
@@ -20,9 +21,21 @@
 
 namespace cxl_tlm {
 
+enum class CxlEnumRole : std::uint8_t {
+    UNKNOWN = 0,
+    HOST_BRIDGE,
+    ROOT_PORT,
+    USP,
+    DSP,
+    ENDPOINT
+};
+
 struct CxlEnumDev {
     std::string path;
+    CxlEnumRole role = CxlEnumRole::UNKNOWN;
+    int parent = -1;                           // index in CxlDeviceTree::devs
     std::uint8_t bus = 0, dev = 0, fn = 0;
+    std::uint8_t pcie_cap_type = 0;            // 0/4/5/6
     std::uint8_t sec = 0, sub = 0;              // Type1 downstream range
     std::uint16_t vid = 0, did = 0;
     std::uint8_t header_type = 0;
@@ -55,7 +68,15 @@ struct CxlDeviceTree {
     std::string log;
 };
 
+// Legacy switch-only enumerator (fixture for low-level tests; starts at the
+// switch USP).
 CxlDeviceTree cxl_enumerate(CxlSwitch& sw, const CxlEnumConfig& cfg = CxlEnumConfig());
+
+// Standard Linux-like enumerator: host bridge at 00:00.0, root port at
+// 00:01.0, USP on the root-port secondary bus, DSPs and endpoints below.
+CxlDeviceTree cxl_enumerate_host(CxlRootComplex& rc, CxlSwitch& sw,
+                                 const CxlEnumConfig& cfg = CxlEnumConfig());
+
 bool cxl_app_dev_num_ok(const CxlEnumConfig& cfg, std::uint8_t actual,
                         std::string* err = nullptr);
 

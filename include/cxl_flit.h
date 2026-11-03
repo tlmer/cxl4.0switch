@@ -126,6 +126,45 @@ static_assert(kFlit256Bytes == 256, "256B flit container layout must sum to 256 
 static_assert(kFlit68LinkBytes == 4 * 16 + 2, "68B link flit = 4 x 16B slots + 2B CRC");
 static_assert(kFlit68Bytes == kFlit68LinkBytes + 2, "68B flit = link flit + 2B ARB/MUX");
 
+// 256B flit **container** (CXL 4.0 Section 4.3 layout as frozen in design
+// Sec. 3.3): 2B HDR + 14B H-slot + 14 x 16B G-slots + 2B CRD + 8B CRC + 6B FEC.
+// The per-format field maps *inside* the slots are not defined here: they are
+// customer-RTL/table items (M1.10 / M5.2).  This struct only guarantees the
+// 256-byte container and byte-exact transport.
+struct CxlFlit256 {
+    std::uint8_t hdr[kFlit256HdrBytes] = {};
+    std::uint8_t hslot[kFlit256HSlotBytes] = {};
+    std::uint8_t gslot[kFlit256GSlots][kFlit256GSlotBytes] = {};
+    std::uint8_t crd[kFlit256CrdBytes] = {};
+    std::uint8_t crc[kFlit256CrcBytes] = {};
+    std::uint8_t fec[kFlit256FecBytes] = {};
+
+    void clear() { *this = CxlFlit256(); }
+
+    void to_bytes(std::uint8_t out[kFlit256Bytes]) const {
+        std::size_t o = 0;
+        for (std::size_t i = 0; i < kFlit256HdrBytes; ++i)   out[o++] = hdr[i];
+        for (std::size_t i = 0; i < kFlit256HSlotBytes; ++i) out[o++] = hslot[i];
+        for (std::size_t s = 0; s < kFlit256GSlots; ++s)
+            for (std::size_t k = 0; k < kFlit256GSlotBytes; ++k) out[o++] = gslot[s][k];
+        for (std::size_t i = 0; i < kFlit256CrdBytes; ++i)   out[o++] = crd[i];
+        for (std::size_t i = 0; i < kFlit256CrcBytes; ++i)   out[o++] = crc[i];
+        for (std::size_t i = 0; i < kFlit256FecBytes; ++i)   out[o++] = fec[i];
+    }
+    bool from_bytes(const std::uint8_t in[kFlit256Bytes], std::string* err = nullptr) {
+        if (!in) { if (err) *err = "null 256B container"; return false; }
+        std::size_t o = 0;
+        for (std::size_t i = 0; i < kFlit256HdrBytes; ++i)   hdr[i] = in[o++];
+        for (std::size_t i = 0; i < kFlit256HSlotBytes; ++i) hslot[i] = in[o++];
+        for (std::size_t s = 0; s < kFlit256GSlots; ++s)
+            for (std::size_t k = 0; k < kFlit256GSlotBytes; ++k) gslot[s][k] = in[o++];
+        for (std::size_t i = 0; i < kFlit256CrdBytes; ++i)   crd[i] = in[o++];
+        for (std::size_t i = 0; i < kFlit256CrcBytes; ++i)   crc[i] = in[o++];
+        for (std::size_t i = 0; i < kFlit256FecBytes; ++i)   fec[i] = in[o++];
+        return true;
+    }
+};
+
 const char* flit_mode_name(bool pbr, bool hbr256);   // "PBR" / "256B" / "68B"
 
 } // namespace cxl_tlm

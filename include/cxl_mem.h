@@ -13,6 +13,7 @@
 #include "cxl_hdm_prog.h"
 #include "cxl_msg.h"
 #include "cxl_port_adapter.h"
+#include "cxl_root_complex.h"
 
 #include <cstdint>
 #include <map>
@@ -23,6 +24,7 @@ namespace cxl_tlm {
 
 struct CxlMemSystem {
     CxlRoot root;
+    CxlRootComplex rootc;
     CxlSwitch sw;
     std::vector<CxlPortAdapter> adapters;
     CxlFlitMode mode = CxlFlitMode::B68;

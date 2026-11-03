@@ -25,7 +25,30 @@
 
 namespace cxl_tlm {
 
-enum class CxlCfgRole : std::uint8_t { DEVICE = 0, PORT = 1 };
+// DEVICE/PORT are the legacy roles kept for existing register tests.  The
+// standard hierarchy uses HOST_BRIDGE / ROOT_PORT / UPSTREAM_PORT /
+// DOWNSTREAM_PORT / ENDPOINT.  Header type, class code and the PCIe
+// capability type are derived from the role (see CxlCfgSpace::init).
+enum class CxlCfgRole : std::uint8_t {
+    DEVICE = 0,
+    PORT = 1,             // legacy downstream port (PCIe cap type 6)
+    HOST_BRIDGE = 2,
+    ROOT_PORT = 3,
+    UPSTREAM_PORT = 4,
+    DOWNSTREAM_PORT = 5,
+    ENDPOINT = 6
+};
+
+inline bool cxl_role_is_endpoint(CxlCfgRole r) {
+    return r == CxlCfgRole::DEVICE || r == CxlCfgRole::ENDPOINT;
+}
+inline bool cxl_role_is_host_bridge(CxlCfgRole r) {
+    return r == CxlCfgRole::HOST_BRIDGE;
+}
+inline bool cxl_role_is_bridge(CxlCfgRole r) {
+    return r == CxlCfgRole::PORT || r == CxlCfgRole::ROOT_PORT ||
+           r == CxlCfgRole::UPSTREAM_PORT || r == CxlCfgRole::DOWNSTREAM_PORT;
+}
 
 struct CxlCfgSpace {
     CxlCfgRole role = CxlCfgRole::DEVICE;
@@ -45,6 +68,11 @@ struct CxlCfgSpace {
     mutable std::uint64_t align_err = 0;   // size/alignment violation
 
     void init(CxlCfgRole r);
+
+    // Role-derived identity (Linux/lspci observable).
+    std::uint8_t header_type() const;
+    std::uint32_t class_code() const;
+    std::uint8_t pcie_cap_type() const;
 
     bool read(std::uint16_t off, unsigned size, std::uint32_t* val,
               std::string* err = nullptr) const;

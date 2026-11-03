@@ -11,6 +11,7 @@
 // -----------------------------------------------------------------------------
 #pragma once
 #include "cxl_commands.h"
+#include "cxl_acpi.h"
 #include "cxl_dts.h"
 #include "cxl_enum.h"
 #include "cxl_hdm_prog.h"
@@ -27,6 +28,7 @@ struct CxlLinuxProxy {
     CxlMemSystem sys;
     std::vector<CxlType3Commands> dev;
     CxlDeviceTree tree;
+    CxlCedtView cedt;
     std::string log;
     std::string kernel_log;        // Linux-driver-style raw lines (opt-in)
     bool kernel_log_on = false;

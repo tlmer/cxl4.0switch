@@ -5,6 +5,11 @@
 //   onetest,bar0-base       : first BAR0 base used by enumeration
 //   onetest,mailbox-payload : 256/512/1024 bytes
 //   onetest,flit-mode       : "68b" | "256b" | "pbr"
+//   onetest,root-bus        : virtual root bus (default 0)
+//   onetest,root-port-dev   : root port device on the root bus (default 1)
+//   onetest,usp-bus         : root-port secondary bus (default 1)
+//   onetest,usp-sec         : switch internal/DSP bus (default 2)
+//   onetest,auto-enumerate  : 1 = enumerate on model start (default)
 /dts-v1/;
 
 / {
@@ -14,4 +19,9 @@
     onetest,bar0-base = <0x80000000>;
     onetest,mailbox-payload = <1024>;
     onetest,flit-mode = "68b";
+    onetest,root-bus = <0>;
+    onetest,root-port-dev = <1>;
+    onetest,usp-bus = <1>;
+    onetest,usp-sec = <2>;
+    onetest,auto-enumerate = <1>;
 };
