@@ -104,10 +104,12 @@ DTS profile:
 The model-side feature set is verified by a **115-gate full-tree regression
 (0 FAIL)** that includes a 43-bench capability suite, plus DTS,
 testcase/ioctl/trace/coverage/perf, DUT-docking vectors, port compatibility
-check, independent library smoke, and console runs.  See
+check, independent library smoke, and console runs.  A local integration of
+four `swdn` RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  See
 `evidence/VALIDATION.md` for counts and artifacts.  Customer `swdn` + EP DUT
 RTL co-simulation and the RTL PBR/256B profile remain pending the customer
-environment and are reported as `SKIP`, never as a pass.
+environment and are reported as `SKIP`, never as a pass; model-side known
+limits are enumerated in `NOT_SUPPORTED_CXL.md`.
 
 ## Boundaries
 

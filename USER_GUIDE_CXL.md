@@ -236,6 +236,12 @@ Batch: `--dts <path>`, `--run-all`, `--cover`, `--tc <id|all> [n]`,
 
 ## 6. Covered and not covered
 
+**Current model-side baseline (2026-11-10)**: full tree **115/115 gates
+PASS, 0 FAIL**, 43-bench capability suite PASS, delivery library
+**51 objects / 83 public headers**.  A local integration of four `swdn`
+RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  The
+customer-environment co-simulation remains SKIP.
+
 Covered: contract/bit-level messages, DVSEC/RegLoc/HDM/mailbox, enumeration,
 HDM programming, CXL.mem (BE/poison/NXM/Tag), Linux proxy sequence, events,
 PBR/PTH/FAST/LDST, Direct P2P, two-level cascade, N=1..32, port adapter RTL/DPI
@@ -244,27 +250,49 @@ PBR CCI, 2/4/8-way interleave, EMD/BISnp/HDM-DB, multi-outstanding, multi-level
 PBR/ISL/G-FAM, MLD/FMLD/vCS; multi-device cache directory, multi-host HDM-DB,
 RGT 256/advanced modes, UIO/GMV/VTV/GIM, vPPB Type1/hot-plug/capabilities/power,
 PBR CCI remainder, EMD 1..32/EMDErr, 3/6/12-way device decoders, cache CQID OOO,
-HDM-DB dirty lines, GIM groups, directory limits; DTS, testcase channel, ioctl
-ABI, MODEL_TRACE, perf windows, independent library smoke.
+HDM-DB dirty lines, GIM groups, directory limits; vPPB extension chain
+(DPC/LTR/PTM/VC/L1SS/DLF/DSN/ReBAR/MFVC/DOE/DVSEC) and standard ReBAR layout
+on the PCIe, Type-3 and vPPB faces; DTS, testcase channel, ioctl ABI,
+MODEL_TRACE, perf windows, independent library smoke.
 
 Not covered / explicit boundaries:
 
-- Full PCIe extended capability surface inside vPPB and vendor-specific slot
-  power timing (unimplemented registers read 0).
-- GIM internal address translation/GFD mapping (implementation-defined by the
-  spec; the model uses GIM ID + offset).
+- Full PCIe extended capability surface inside vPPB: the R4 chain adds DPC,
+  LTR, PTM, VC, L1SS, DLF, DSN, ReBAR, MFVC, DOE and DVSEC, but remaining
+  extended-capability registers still read 0.  MFVC/DOE/DVSEC offsets are
+  model-defined pending the customer's formal vPPB layout.
+- Vendor-specific slot power timing is a configurable per-rail table; real
+  electrical rails are not modeled.
+- GIM internal address translation/GFD routing beyond the configurable
+  selector mapping is implementation-defined.
 - Vendor-specific advanced-congestion metric (the congestion input and
   secondary penalty are model-level approximations).
 - CXL.cache TEE, vendor-specific multi-level replacement policies, long
   multi-host soak tests.
+- Dynamic Capacity (DCD) is opt-in and off by default; multi-host/tag
+  sharing is implemented (1..8 hosts), but the model does not own a media
+  array or perform scans (owner hooks connect a device backend).
+- Security Send/Receive is an owner-hook passthrough (TCG/SED protocol not
+  modeled).  IDE key/stream/IV management and AES-256-GCM are modeled
+  (IDE_KM and IDE crypto benches pass); real RTL link-layer IDE framing/TSP
+  is owned by the customer link-layer IP.  DOE supports Discovery, CDAT and
+  an optional IDE_KM object; the CMA object is rejected.
+- Mailbox opcodes outside the implemented whitelist return `Unsupported`
+  (for example 0x0106-0x010A, 0x4900+, 0x5717+).
+- CPMU provides counter/register blocks; multiple 64-KB RegLoc block mapping
+  and direct MSI-X integration are platform-owner responsibilities.
+- VPD is a register window; ROM BAR contents remain a separate profile.
+- LTR/VDM/PTM multi-DW payloads are supported by the C++ model; the W5 VIP
+  host agent is limited to one DW.
 - Customer `swdn` + EP DUT RTL co-simulation (M6.2-M6.7): requires the customer
   environment, EP peer, and full DPI bridge.  The model-side docking vectors,
-  port check, force subsets, and wrapper are complete.
+  port check, force subsets, and wrapper are complete; the local four-port
+  swdn + RTL-EP integration passes M1-M5 (14/14).
 - Customer RTL PBR/256B profile: the delivered CTL configuration has PBR
   disabled; the model spec profile is validated, the RTL profile is SKIP.
 - PHY electrical/link training/CRC/retry below the CTL app interface.
 - Physical media poison injection; the model maintains the poison list only.
-- NTB and DM are explicitly out of scope.
+- NTB and DM are minimal model-defined scope (F1a/F1b), not full vendor APIs.
 
 The model reports unimplemented cases as `Unsupported` or `SKIP`; a skip is
 never counted as a pass.

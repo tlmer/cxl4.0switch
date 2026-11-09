@@ -69,7 +69,9 @@ helpers remain internal to the SystemC layer.
   check, force subsets and wrapper are complete.
 - Local model-to-DUT bring-up (clean standard controller + the supplied
   endpoint wrapper) passes PCIe link-up, CXL.io configuration reads, CXL.mem
-  M2S/S2M traffic, and DBI configuration through the port adapter; this is an
+  M2S/S2M traffic, and DBI configuration through the port adapter.  A
+  four-port version (four `swdn` RTL cores + four RTL EPs) passes
+  MC/BC/MemRd M1-M5 **14/14** and the K12-3/K12-7 checks; this is an
   internal integration result and does not replace customer-environment
   co-simulation.
 - Customer RTL PBR/256B profile: the delivered CTL configuration has PBR
@@ -77,6 +79,17 @@ helpers remain internal to the SystemC layer.
 - PHY electrical/link training/CRC/retry, physical media poison path,
   vendor-specific slot power and GIM internal GFD mapping.
 - NTB and DM are minimal model-defined scope (F1a/F1b); not full vendor APIs.
+- Model-side known limits (not defects): CXL.cache TEE and vendor-specific
+  replacement policies; remaining PCIe extended-capability registers in the
+  vPPB read 0; DCD is opt-in (no multi-host/tag sharing, media/scan are owner
+  hooks, with 1..8-host/tag sharing implemented); Security Send/Receive is
+  an owner passthrough (TCG/SED not modeled); IDE key/stream/IV and
+  AES-256-GCM are modeled with an owner cipher hook (real RTL link framing/
+  TSP is customer-owned); DOE has Discovery + CDAT + optional IDE_KM (CMA
+  rejected); CPMU RegLoc mapping/MSI-X integration
+  is platform-owned; VPD is a register window (ROM contents are a separate
+  profile); LTR/VDM/PTM multi-DW is supported by the C++ model but the W5
+  host agent is limited to one DW.
 - Cascaded-switch data-plane HDM is model-verified through `mem_route_backend`
   and a model endpoint backend; customer cascaded RTL data-plane integration
   remains part of the customer RTL co-simulation (environment pending).
