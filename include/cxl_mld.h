@@ -104,6 +104,68 @@ struct CxlVppbConfig {
     std::uint32_t sriov_vf_bar0 = 0;
     std::uint64_t sriov_vf_enables = 0;
 
+    // ---- F4: extended capability chain segment 2 (0x180..0x1A3) -----------
+    // DPC @0x180 -> LTR @0x190 -> PTM @0x198.  Standard PCIe layouts; the
+    // chain is appended after SR-IOV so every existing offset stays put.
+    std::uint16_t dpc_cap = 0x00C0;      // [6] poison egress, [7] sw trigger
+    std::uint16_t dpc_ctl = 0;           // [0] int en, [1] egress block, [2] sw trigger
+    std::uint16_t dpc_status = 0;        // [0] trigger, [1] UC, [2] fatal, [4] int, [5] sw
+    std::uint16_t dpc_err_src = 0;
+    std::uint16_t ltr_max_snoop = 0, ltr_max_nosnoop = 0;
+    std::uint16_t ptm_cap = 0x0007;      // requester / responder / root
+    std::uint16_t ptm_ctl = 0;           // [0] enable, [1] root select
+    std::uint16_t ptm_status = 0;        // RO (no local granularity source)
+    // VC @0x1A8: one VC (VC0), WRR32/64 arbitration, no arbitration table.
+    std::uint16_t vc_port_ctl = 0;       // [3:1] VC arbitration select
+    std::uint32_t vc_res_ctl = 0x80000001u;  // [7:0] TC/VC map, [31] enable
+    // L1SS @0x1C8 (port capability) and DLF @0x1E0 (Data Link Feature).
+    std::uint32_t l1ss_ctl1 = 0;         // RW mask 0x0000FF0F
+    std::uint32_t l1ss_ctl2 = 0;         // RW mask 0x000000FF
+    std::uint32_t dlf_exchange = 0;      // bit31 Data Link Feature Exchange Enable
+    // DSN @0x1E8 (model profile serial, RO).
+    std::uint64_t dsn_serial = 0x1E98000200000001ull;
+
+    // ---- R4: ReBAR @0x1F4 (CapID 0x0015, appended after DSN) --------------
+    // Standard PCIe layout (Linux pci_regs.h):
+    //   0x1F4 PCI Express Extended Capability Header
+    //   0x1F8 Resizable BAR Capability: supported sizes bitmap [27:4]
+    //         (bit N => 1MB << N, PCI_REBAR_CAP_SIZES 0x00FFFFF0)
+    //   0x1FC Resizable BAR Control: BAR Index[2:0],
+    //         Number of Resizable BARs[7:5] (RO = 1), BAR Size N[12:8]
+    // A resize write is ignored while the BAR's MSE is on (gate, counted).
+    std::uint32_t rebar_sizes = 0x15u;   // N bitmap: 1 MB (0), 4 MB (2), 16 MB (4)
+    std::uint8_t rebar_sel = 0;          // selected N (BAR size = 1MB << N)
+    std::uint64_t rebar_gated_block = 0; // resize attempts blocked by the gate
+    std::uint64_t rebar_bar_size() const {
+        return 0x100000ull << rebar_sel;
+    }
+
+    // ---- R4: MFVC @0x200 (CapID 0x0008; model profile, layout follows
+    //      pcie_ext_caps::mfvc(1): capability(2B) / port VC cap(4B) /
+    //      port VC control(2B) + status(2B) / one per-function VC block).
+    std::uint16_t mfvc_port_ctl = 0;     // [3:0] arbitration select (RW)
+    std::uint32_t mfvc_fn_ctl = 0;       // per-function VC ctl (RW mask 0x000E0000)
+
+    // ---- R4: DOE @0x21C (CapID 0x002E; PCIe standard register layout) -----
+    //   0x220 Capability (bit0 Interrupt Support, [11:1] Int Msg Number)
+    //   0x224 Control (bit0 Interrupt Enable, bit31 GO self-clearing)
+    //   0x228 Status (bit0 Busy, bit1 Int Status W1C, bit2 Error W1C,
+    //         bit31 Data Object Ready)
+    //   0x22C Write Data (WO mailbox) / 0x230 Read Data (RO mailbox)
+    // The object protocol is model-defined: GO with a non-empty request
+    // echoes the request as the response object; an empty request sets Error.
+    std::uint32_t doe_control = 0;
+    mutable std::uint32_t doe_status = 0;   // read of Read Data consumes an object
+    std::vector<std::uint32_t> doe_request, doe_response;
+    mutable std::size_t doe_read_idx = 0;
+    std::uint64_t doe_objects = 0, doe_errors = 0;
+
+    // ---- R4: DVSEC @0x234 (CapID 0x000B; vendor/model-defined ID) ---------
+    std::uint16_t dvsec_vendor_id = 0x1E98u;   // model vendor
+    std::uint16_t dvsec_revision = 1;
+    std::uint16_t dvsec_id = 0x0001u;          // model-defined DVSEC ID
+    std::uint32_t dvsec_reg0 = 0, dvsec_reg1 = 0;
+
     // ---- Slot power / presence state --------------------------------------
     bool present = true;
     bool power_on = true;

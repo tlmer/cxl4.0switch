@@ -199,7 +199,9 @@ inline std::uint32_t regloc_high(std::uint64_t bar_offset) {
     return (std::uint32_t)((bar_offset >> 32) & 0xFFFFFFFFu);
 }
 inline std::uint64_t regloc_offset(std::uint32_t low, std::uint32_t high) {
-    return (((std::uint64_t)high) << 32) | ((std::uint64_t)(low & kRegLocOffsetHi16) << 16);
+    // Offset Low[31:16] already carries register-block offset[31:16];
+    // Offset High carries offset[63:32].  Do not shift the low half again.
+    return (((std::uint64_t)high) << 32) | (std::uint64_t)(low & kRegLocOffsetHi16);
 }
 
 } // namespace cxl_tlm

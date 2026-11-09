@@ -101,9 +101,10 @@ DTS profile:
 
 ## Validation status
 
-The model-side feature set is verified by 44 feature testbenches (600 checks)
-plus DTS, testcase/ioctl/trace/coverage/perf, DUT-docking vectors, port
-compatibility check, independent library smoke, and console runs.  See
+The model-side feature set is verified by a **115-gate full-tree regression
+(0 FAIL)** that includes a 43-bench capability suite, plus DTS,
+testcase/ioctl/trace/coverage/perf, DUT-docking vectors, port compatibility
+check, independent library smoke, and console runs.  See
 `evidence/VALIDATION.md` for counts and artifacts.  Customer `swdn` + EP DUT
 RTL co-simulation and the RTL PBR/256B profile remain pending the customer
 environment and are reported as `SKIP`, never as a pass.
