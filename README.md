@@ -43,7 +43,6 @@ tb/uvm_ioctl/            UVM TB + ioctl-style test selector (porting entry point
 cosim/cxl/axi/           optional 128-bit AXI4 master + external-SRAM bench
 tools/                   port check, DUT vector/force generators
 USER_GUIDE_CXL.md        build/API/console/TC/ioctl/trace/DTS guide
-VIP_EP_TEST_GUIDE.md     customer CXL VIP endpoint CXL.io test guide
 FAQ.txt                  standalone tests / top files / VIP / DUT / UVM FAQ
 NOT_SUPPORTED_CXL.md     scope, IP ledger, not-supported list
 evidence/VALIDATION.md   validation summary
@@ -63,11 +62,8 @@ The library is self-contained and has no SystemC or OS dependency.  A customer
 integration can link `lib/libcxl_switch_model.a`, include `include/cxl_*.h`,
 and drive the model through the C++ classes or the testcase/ioctl channels.
 
-Note (2026-11): the model upper half (root, switch USP/crossbar, N×swdn
-ports) also has an internal SystemC implementation used for VCS/DPI
-co-simulation.  Both layers share the same U-layer objects and behavior;
-the SystemC layer (`cxl_sc_*`) is deliberately not part of this
-SystemC-free delivery archive.
+The delivered library is SystemC-free.  Optional SystemC/DPI co-simulation
+integration is available separately; it is not part of this archive.
 
 ### Start here for porting: UVM TB with ioctl-style test control
 

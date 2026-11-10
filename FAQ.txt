@@ -56,56 +56,19 @@ There is no downstream-port (swdn) or endpoint RTL in the model repository.
 
 Q3: How do I run the joint model + VIP test?
 A3:
-Use the customer's CXL VIP as the endpoint with the model's VIP integration
-package.  The binary-only library archive alone is not sufficient for this
-flow; the VIP overlay and integration package are delivered separately under
-the customer's VIP license.  The step-by-step guide is:
+The joint model + VIP flow is provided as a separate integration package; it
+is not part of this repository.  The package contains the licensed VIP
+overlay, the model-host integration layer, the build/topology configuration and
+the run procedure.  Apply it under the customer's VIP license and follow the
+package's README.
 
-  <MODEL_ROOT>/VIP_EP_TEST_GUIDE.md
+Validated scope in that package:
+  - CXL.io link-up and configuration enumeration;
+  - CXL.io memory read and posted memory write/readback.
 
-Summary:
-
-  1. Install the licensed CXL Subsystem VIP and copy its tb_dut_cxl example to
-     a writable work tree:
-       cp -a <VIP_HOME>/examples/sverilog/cxl_test_suite_svt/tb_dut_cxl \
-             <WORK>/tb_dut_cxl
-
-  2. Point the model's VIP path at that work tree:
-       cd <MODEL_ROOT>/cosim/cxl
-       rm -f vip_design
-       ln -s <WORK> vip_design
-
-  3. Apply the overlay files under <WORK>/tb_dut_cxl.  The overlay is not part
-     of this repository; obtain it from the delivery package and apply it under
-     the customer's VIP license.  The overlay file list and copy commands are
-     in VIP_EP_TEST_GUIDE.md.
-
-  4. Build the model-host DPI library using the integration package's
-     provided script (see the guide).
-
-  5. Apply the path substitutions listed in the guide for the customer's
-     VIP and controller-configuration locations.
-
-  6. Export the model topology/compile pair for BOTH build and run:
-       export SVT_CXL_SUBSYSTEM_TOPOLOGY_FILE=topology_snps_sw_vip_model.svi
-       export SVT_CXL_SUBSYSTEM_COMPILE_FILE=compile_snps_sw_vip_model.f
-     A correct build reports 1292 modules / 20 UDPs; the stock VIP-to-VIP
-     fallback reports 80 modules.
-
-  7. Build and run:
-       cd <WORK>/tb_dut_cxl
-       ./run_dut_cxl -buildonly cxl_io_random_mem_wr_rd vcsvlog
-
-       cd <MODEL_ROOT>
-       CXL_HOST_MEM_TRANSPORT=1 CXL_HOST_MEM_SMOKE=1 \
-       CXL_HOST_MEM_SMOKE_WRITE=1 \
-       CXL_HOST_MEM_TIMEOUT_S=60 CXL_HOST_CFG_TIMEOUT_S=120 \
-       sh cosim/cxl/w5_host/run_host_enum.sh cxl_io_random_mem_wr_rd
-
-The validated result is CXL.io link-up, enumeration, memory read and posted
-memory write/readback.  CXL.cache/CXL.mem over the serial link is not validated
-in this flow because the current controller configuration is Gen3 and CXL APN
-requires >=32 GT/s; use the separate Route-C VIP TL flow for CXL.cache/CXL.mem.
+CXL.cache/CXL.mem over the serial link requires a Gen5/APN-capable controller
+configuration (or the separate VIP TL flow); it is not validated in the Gen3
+reference package.
 
 Q4: How do I insert the customer's own DUT?
 A4:

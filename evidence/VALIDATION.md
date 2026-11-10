@@ -52,15 +52,12 @@ SystemC-free archive.
 
 ## Delivery update (2026-11-10)
 
-`build_cxl_lib.sh` (plain-C++ delivery): **51 objects / 83 public headers**
+The delivered library is plain C++: **51 objects / 83 public headers**
 (82 CXL + `pcie_ext_caps.h`); English, path-leak and vendor-name gates
-clean.  `stage_repo.sh` reruns the independent smoke/console against the
-delivered library: **`SMOKE_CXL: ALL PASS`** (proxy + perf + 18 testcases),
-console **18/18**.  SystemC module headers/sources (`cxl_sc_*`) are
-excluded from this SystemC-free archive.  The LTR/PRI/PTM data-plane
-helper headers include the SystemC `pcie_sc_wire.h`, so only their
-capability-register surface ships (in `pcie_ext_caps.h`); the data-plane
-helpers remain internal to the SystemC layer.
+clean.  An independent staged smoke/console against the delivered library
+reports **`SMOKE_CXL: ALL PASS`** (proxy + perf + 18 testcases) and console
+**18/18**.  The archive is SystemC-free; optional SystemC/DPI co-simulation
+integration is delivered separately.
 
 ## Pending / SKIP (not counted as pass)
 

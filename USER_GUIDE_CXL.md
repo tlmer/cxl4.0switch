@@ -2,7 +2,8 @@
 
 > Scope: CXL root, switch upper half (USP/crossbar), port adapters, and the
 > no-OS Linux behavior proxy.  The customer `swdn` and EP are downstream DUTs.
-> Design/verification/status are in [`md/`](md/); this page only explains usage.
+> This page explains usage; scope and not-supported items are in
+> `NOT_SUPPORTED_CXL.md`.
 
 ---
 

@@ -17,10 +17,10 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 | CXL root complex, switch upper half (USP, crossbar, DSP port adapters) | this model | SystemC/C++ functional model |
 | No-OS Linux behavior proxy, mailbox/CCI, events, poison, HDM programming | this model | functional sequence, not a real kernel |
 | Validation interfaces (DTS, testcase, ioctl, trace, coverage, perf, console) | this model | independent of the customer DUT UAPI |
-| CTL `swdn_cxl` downstream switch port RTL | customer DUT | connected through the port adapter |
+| DWC `swdn_cxl` downstream switch port RTL | customer DUT | connected through the port adapter |
 | Endpoint DUT behind `swdn` | customer DUT | enumerated/accessed by the model |
 | Port adapter/tie-off/DPI stub | this model | the only RTL in this tree |
-| PHY, LTSSM, link training, DLL retry, PCS | downstream CTL/PHY | not modeled |
+| PHY, LTSSM, link training, DLL retry, PCS | downstream DWC/PHY | not modeled |
 
 ## Not supported / explicit boundaries
 
@@ -31,14 +31,16 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
    status, health, error log, warm/cold reset, FM-owned mode; unknown
    opcodes return Unsupported).  The DM command set is model-defined and not
    the full vendor management API.
-2. **PCIe extended capability surface inside vPPB (expanded in R4).**
+2. **PCIe extended capability surface inside vPPB (expanded in R4/R6).**
    The vPPB exposes AER (status/mask/severity/ECRC/header log/root status),
    ATS (enable/STU + invalidation counters), ACS (control + P2P redirect
    check) and SR-IOV (VF count/offset/stride/enable) in addition to
-   PM/PCIe/Slot/Link/MSI.  The R4 chain adds DPC, LTR, PTM, VC, L1SS, DLF,
-   DSN, ReBAR, MFVC, DOE and DVSEC (standard layouts except MFVC/DOE/DVSEC,
-   whose offsets are model-defined pending the customer's formal vPPB
-   layout).  Remaining extended-capability registers still read zero.
+   PM/PCIe/Slot/Link/MSI.  R4 adds DPC, LTR, PTM, VC, L1SS, DLF, DSN, ReBAR,
+   MFVC, DOE and DVSEC; R6 adds Power Budgeting, ARI, PRI, TPH, PASID,
+   Secondary PCIe, NPEM, VF ReBAR and PL16/32/64 (standard register faces at
+   0x248..0x327).  Any still-unmodeled higher offset reads zero.  The
+   data-plane behavior of these features remains with the owner; the
+   registers are a capability surface.
 3. **Vendor-specific slot power timing (implemented F3).**  Power sequencing
    now supports a configurable per-rail/board timing table (`add_power_rail`:
    delay + ramp + power-good per rail, plus a reset-release window) and
@@ -65,13 +67,16 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
    the model's CXL.io PTH behavior is a model-level interpretation and the RTL
    profile skips it.
 9. **CCI opcodes outside the implemented set** (for example 5717h and later)
-   return `Unsupported`.
+   return `Unsupported`.  Mailbox opcodes 0107h-010Ah remain reserved /
+   Unsupported; 4900h+ is GFD-only.  Event Notification 0106h is modeled as
+   the component-originated MCTP CCI payload/queue, not a host mailbox
+   command.
 10. **3/6/12-way on a switch.**  CXL 4.0 permits 3/6/12-way only for CXL.mem
     device decoders; switch/USP target lists have 1/2/4/8 entries.  The model
     rejects 3/6/12-way on a switch with `Error Not Committed`.  This is a
     spec-correct rejection, not a missing feature.
 11. **PHY-level behavior** (electrical, link training, CRC, retry, equalization)
-    is below the CTL application interface and is not modeled.
+    is below the DWC application interface and is not modeled.
 12. **Physical media poison injection.**  The model maintains the poison list
     and event/response semantics; there is no physical media path.
 13. **Customer `swdn` + EP DUT RTL co-simulation (M6.2-M6.7).**  The model-side
@@ -81,7 +86,7 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     bridge.  A local integration in this tree (four `swdn` RTL cores + four
     RTL EPs) passes M1-M5 (14/14); it does not replace the
     customer-environment co-simulation.
-14. **Customer RTL PBR/256B profile.**  The delivered CTL configuration has PBR
+14. **Customer RTL PBR/256B profile.**  The delivered DWC configuration has PBR
     disabled; the model implements the spec profile, while the RTL profile is
     SKIP until the customer enables PBR.
 15. **Real Linux kernel callbacks.**  The Linux proxy reproduces the behavior
@@ -102,9 +107,10 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     DOE supports Discovery, CDAT table access and an optional IDE_KM object;
     the CMA object is not implemented and is explicitly rejected.
 18. **CPMU.**  The model provides counter/register blocks (multi-counter,
-    multi-instance, overflow interrupt through an owner `irq_hook`); mapping
-    multiple 64-KB RegLoc blocks and direct MSI-X integration are
-    platform-owner responsibilities.
+    multi-instance, overflow interrupt) and an optional
+    `CxlCpmuMsixBridge` to an MSI-X table/root IRQ; mapping multiple 64-KB
+    RegLoc blocks into a specific platform's DVSEC layout remains an owner
+    responsibility.
 19. **VPD / ROM.**  The VPD register window is implemented; the ROM BAR
     contents remain a separate configuration profile.
 20. **LTR/VDM/PTM multi-DW payloads.**  The C++ model supports arbitrary DW
@@ -130,8 +136,6 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
   discovery/HDM/mailbox/memory/event/poison/PM, reproduced by the no-OS Linux
   proxy.  They are model prints in the same format as the kernel messages,
   not real `dmesg` output.
-- `cxl_stimu_ex` / `ep_stimu_ex` are local stimulus examples (not published).
-  They drive every 68B CXL.mem/CXL.cache opcode with per-channel credits and
-  tag/UQID/CQID checks; on the real SW + EP pair the run ends with
-  `W6_SIM: PASS` (344 messages per side, `tag_err=0`; evidence
-  `evidence/M6/W6_real_sw_ep/`).
+- Model-level validation covers every 68B CXL.mem/CXL.cache opcode with
+  per-channel credits and tag/UQID/CQID checks; on the real SW + EP pair the
+  run ends with `W6_SIM: PASS` (344 messages per side, `tag_err=0`).
