@@ -233,9 +233,11 @@ Batch: `--dts <path>`, `--run-all`, `--cover`, `--tc <id|all> [n]`,
 
 ## 6. Covered and not covered
 
-**Current model-side baseline (2026-11-10)**: full tree **115/115 gates
-PASS, 0 FAIL**, 43-bench capability suite PASS, delivery library
-**51 objects / 83 public headers**.  A local integration of four `swdn`
+**Current model-side baseline (2026-11-11)**: the last complete tree
+regression is **115/115 gates PASS, 0 FAIL**; the current tree has
+**122 gates**, with R7-R14 directed PASS but no full 122-gate rerun.
+43-bench capability suite PASS; delivery library
+**52 objects / 86 CXL public headers**.  A local integration of four `swdn`
 RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  The
 customer-environment co-simulation remains SKIP.
 

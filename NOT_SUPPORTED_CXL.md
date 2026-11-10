@@ -3,10 +3,12 @@
 This file is the customer-facing boundary statement.  A `SKIP` or
 `Unsupported` result is never counted as a pass.
 
-**Current model-side baseline (2026-11-10)**: full tree **115/115 gates
-PASS, 0 FAIL**; 43-bench capability suite PASS; delivery library
-**51 objects / 83 public headers**; the `tlmer/cxl4.0switch` archive main
-commit `67586b8f…` was verified by an independent staged smoke/console.
+**Current model-side baseline (2026-11-11)**: the last complete tree
+regression is **115/115 gates PASS, 0 FAIL**; the current tree has
+**122 gates**, with R7-R14 directed PASS but no full 122-gate rerun;
+43-bench capability suite PASS; delivery library
+**52 objects / 86 CXL public headers**; the `tlmer/cxl4.0switch` archive
+main commit `262cc5a1…` was verified by an independent staged smoke/console.
 A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 (14/14); the customer-environment co-simulation (item 13) remains SKIP.
 
