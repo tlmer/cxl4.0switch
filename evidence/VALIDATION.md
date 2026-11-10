@@ -90,7 +90,8 @@ integration is delivered separately.
   the EP/PCIe base model synthesizes a standard expansion-ROM image (an owner
   image can replace it; the vPPB ROM BAR is register-only and the CXL
   component model has no ROM BAR); LTR/VDM/PTM multi-DW is supported by the
-  C++ model but the W5 host agent is limited to one DW.
+  C++ model and the W5 host agent carries up to 32 bytes in one 256-bit beat
+  (a directed 2-DW VDM was accepted; LTR/PTM are one-DW by definition).
 - Cascaded-switch data-plane HDM is model-verified through `mem_route_backend`
   and a model endpoint backend; customer cascaded RTL data-plane integration
   remains part of the customer RTL co-simulation (environment pending).

@@ -123,7 +123,9 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     register-only and the CXL component model does not advertise a ROM BAR
     (both are optional PCIe choices).
 20. **LTR/VDM/PTM multi-DW payloads.**  The C++ model supports arbitrary DW
-    payloads; the W5 VIP SV host agent is limited to one DW.
+    payloads.  The W5 VIP SV host agent now carries up to 32 bytes in one
+    256-bit beat; a directed 2-DW VDM was accepted in the W5 run.  LTR and PTM
+    messages are one-DW by definition.
 21. **Mailbox command set.**  Opcodes outside the implemented whitelist
     return `Unsupported` with no silent success (for example 0x0107/0x0108
     GFD Enhanced Event Notification, 0x0109/0x010A Get/Set GAM Buffer,

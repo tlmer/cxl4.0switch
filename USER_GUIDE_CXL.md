@@ -290,7 +290,8 @@ Not covered / explicit boundaries:
   vPPB ROM BAR is register-only and the CXL component model does not
   advertise a ROM BAR (both are optional PCIe choices).
 - LTR/VDM/PTM multi-DW payloads are supported by the C++ model; the W5 VIP
-  host agent is limited to one DW.
+  host agent carries up to 32 bytes in one 256-bit beat (a directed 2-DW VDM
+  was accepted; LTR/PTM are one-DW by definition).
 - Customer `swdn` + EP DUT RTL co-simulation (M6.2-M6.7): requires the customer
   environment, EP peer, and full DPI bridge.  The model-side docking vectors,
   port check, force subsets, and wrapper are complete; the local four-port
