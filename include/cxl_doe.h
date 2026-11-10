@@ -12,9 +12,11 @@
 //     +10 Write Data       WO  request DWs
 //     +14 Read Data        RO  response DWs
 //
-//   Supported objects: DOE Discovery (vendor 0x0001, type 0x01) and CXL
-//   table access for CDAT (vendor 0x1E98, protocol 0x02).  CMA/IDE objects
-//   remain optional and are rejected as unsupported, with an error status.
+//   Supported objects: DOE Discovery (vendor 0x0001, type 0x01), CMA
+//   (vendor 0x0001, type 0x01 with an SPDM payload) and Secured CMA
+//   (vendor 0x0001, type 0x02 with an SPDM payload), CXL CDAT table access
+//   (vendor 0x1E98, protocol 0x02), and optional IDE_KM.  Other objects are
+//   rejected as unsupported, with an error status.
 // -----------------------------------------------------------------------------
 #pragma once
 
@@ -50,6 +52,7 @@ struct CxlDoeDevice {
     std::uint32_t status = 0;
     std::uint16_t cdat_next_handle = 0xFFFFu;
     std::uint64_t discovery_objects = 0, cdat_objects = 0, unsupported = 0;
+    std::uint64_t cma_objects = 0, secured_cma_objects = 0;
 
     void set_cdat(std::vector<std::uint8_t> table) { cdat = std::move(table); }
 
@@ -116,13 +119,16 @@ private:
         const std::uint32_t hdr = request[0];
         const std::uint16_t vendor = (std::uint16_t)(hdr & 0xFFFFu);
         const std::uint8_t type = (std::uint8_t)((hdr >> 16) & 0xFFu);
-        if (vendor == 0x0001u && type == 0x01u && spdm && spdm->handler &&
-            looks_like_spdm(request)) {
+        if (vendor == 0x0001u && (type == 0x01u || type == 0x02u) &&
+            spdm && spdm->handler && looks_like_spdm(request)) {
             std::vector<std::uint32_t> req(request.begin() + 1, request.end());
             std::vector<std::uint32_t> rsp;
             if (spdm->handler(req, &rsp)) {
+                if (type == 0x02u) ++secured_cma_objects;
+                else               ++cma_objects;
                 const std::uint32_t n = (std::uint32_t)(rsp.size() + 1);
-                response.push_back(0x0001u | (0x01u << 16) | (n << 24));
+                response.push_back(0x0001u | ((std::uint32_t)type << 16) |
+                                   (n << 24));
                 for (std::uint32_t w : rsp) response.push_back(w);
                 request.clear();
                 return;

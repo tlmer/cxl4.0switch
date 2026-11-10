@@ -28,7 +28,7 @@ RTL.
   coverage report, performance windows, console utilities
 - Configurable ports `N = 1..32`; NTB/DM minimal model-defined scope (F1a/F1b)
 - The only RTL in this repository is the port adapter/tie-off/DPI stub.
-  PHY/link training/DLL retry belong to the downstream DWC RTL.
+  PHY/link training/DLL retry belong to the downstream CTL RTL.
 
 ## Layout
 
@@ -162,10 +162,12 @@ DTS profile:
 
 ## Validation status
 
-The model-side feature set is verified by a **115-gate model-side regression
-(0 FAIL)** that includes a 43-bench capability suite, plus DTS,
+The model-side feature set was verified by a **115-gate model-side
+regression (0 FAIL)** that includes a 43-bench capability suite, plus DTS,
 testcase/ioctl/trace/coverage/perf, DUT-docking vectors, port compatibility
-check, independent library smoke, and console runs.  A local integration of
+check, independent library smoke, and console runs.  The current tree has
+121 gates; the added R7-R12 feature gates were run directly and pass, while
+a complete 121-gate rerun has not been performed, so 121/121 is not claimed.  A local integration of
 four `swdn` RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  See
 `evidence/VALIDATION.md` for counts and artifacts.  Customer `swdn` + EP DUT
 RTL co-simulation and the RTL PBR/256B profile remain pending the customer
@@ -174,10 +176,11 @@ limits are enumerated in `NOT_SUPPORTED_CXL.md`.
 
 ## Boundaries
 
-See `NOT_SUPPORTED_CXL.md`.  In short: no NTB/DM; no full PCIe extended
-capability surface inside vPPB; no vendor-specific slot power timing or GIM
-internal GFD mapping; no CXL.cache TEE; no PHY-level behavior; no physical
-media poison path; no claim of kernel timing.
+See `NOT_SUPPORTED_CXL.md`.  In short: NTB/DM are minimal model-defined
+scope; the vPPB has a broad but not complete PCIe extended-capability
+surface; no vendor-specific slot power timing or GIM internal GFD mapping;
+no CXL.cache TEE; no PHY-level behavior; no physical media poison path; no
+claim of kernel timing.
 
 **No downstream-port (`swdn`) or endpoint RTL is included.**  The only RTL in
 this repository is the port adapter/tie-off/DPI stub; the UVM TB is a

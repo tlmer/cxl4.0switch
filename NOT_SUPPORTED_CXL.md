@@ -17,10 +17,10 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 | CXL root complex, switch upper half (USP, crossbar, DSP port adapters) | this model | SystemC/C++ functional model |
 | No-OS Linux behavior proxy, mailbox/CCI, events, poison, HDM programming | this model | functional sequence, not a real kernel |
 | Validation interfaces (DTS, testcase, ioctl, trace, coverage, perf, console) | this model | independent of the customer DUT UAPI |
-| DWC `swdn_cxl` downstream switch port RTL | customer DUT | connected through the port adapter |
+| CTL `swdn_cxl` downstream switch port RTL | customer DUT | connected through the port adapter |
 | Endpoint DUT behind `swdn` | customer DUT | enumerated/accessed by the model |
 | Port adapter/tie-off/DPI stub | this model | the only RTL in this tree |
-| PHY, LTSSM, link training, DLL retry, PCS | downstream DWC/PHY | not modeled |
+| PHY, LTSSM, link training, DLL retry, PCS | downstream CTL/PHY | not modeled |
 
 ## Not supported / explicit boundaries
 
@@ -77,7 +77,7 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     rejects 3/6/12-way on a switch with `Error Not Committed`.  This is a
     spec-correct rejection, not a missing feature.
 11. **PHY-level behavior** (electrical, link training, CRC, retry, equalization)
-    is below the DWC application interface and is not modeled.
+    is below the CTL application interface and is not modeled.
 12. **Physical media poison injection.**  The model maintains the poison list
     and event/response semantics; there is no physical media path.
 13. **Customer `swdn` + EP DUT RTL co-simulation (M6.2-M6.7).**  The model-side
@@ -87,7 +87,7 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     bridge.  A local integration in this tree (four `swdn` RTL cores + four
     RTL EPs) passes M1-M5 (14/14); it does not replace the
     customer-environment co-simulation.
-14. **Customer RTL PBR/256B profile.**  The delivered DWC configuration has PBR
+14. **Customer RTL PBR/256B profile.**  The delivered CTL configuration has PBR
     disabled; the model implements the spec profile, while the RTL profile is
     SKIP until the customer enables PBR.
 15. **Real Linux kernel callbacks.**  The Linux proxy reproduces the behavior
@@ -100,27 +100,36 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     sharing is implemented (1..8 hosts, shared-tag accounting).  The model does
     not own a media array or perform scans (owner hooks connect a device
     backend).
-17. **Security Send/Receive, IDE and DOE.**  Security Send/Receive is an
-    owner-hook passthrough (default `Unsupported`); the TCG/SED protocol is
-    not modeled.  IDE is modeled at the key/stream/IV and AES-256-GCM level (IDE_KM and
+17. **Security Send/Receive, IDE and DOE.**  Security Send/Receive implements
+    the CXL transport envelope (SECP, SPSP, reserved bytes, protocol data) with
+    a protocol-handler registry and a matching response queue; it is disabled
+    by default (`Unsupported`).  The TCG/SED payload formats remain
+    owner-supplied handlers (a raw `security_passthrough` hook is also
+    retained).  IDE is modeled at the key/stream/IV and AES-256-GCM level (IDE_KM and
     IDE crypto benches pass) with an owner cipher hook; real RTL link-layer
     IDE framing and TSP integration are owned by the customer link-layer IP.
-    DOE supports Discovery, CDAT table access and an optional IDE_KM object;
-    the CMA object is not implemented and is explicitly rejected.
+    DOE supports Discovery, CDAT table access, CMA / Secured CMA via an
+    attached SPDM session (vendor 0x0001 type 0x01/0x02), and an optional
+    IDE_KM object; unrecognized objects are explicitly rejected.
 18. **CPMU.**  The model provides counter/register blocks (multi-counter,
-    multi-instance, overflow interrupt) and an optional
-    `CxlCpmuMsixBridge` to an MSI-X table/root IRQ; mapping multiple 64-KB
-    RegLoc blocks into a specific platform's DVSEC layout remains an owner
-    responsibility.
-19. **VPD / ROM.**  The VPD register window is implemented; the ROM BAR
-    contents remain a separate configuration profile.
+    multi-instance, overflow interrupt) and an optional bridge to an MSI-X
+    table/root IRQ.  Additional 64-KB RegLoc blocks can be registered through
+    the owner API with alignment/overlap checks; mapping them into a specific
+    platform's DVSEC layout remains an owner responsibility.
+19. **VPD / ROM.**  The VPD register window is implemented.  The EP/PCIe
+    base model now synthesizes a standard expansion-ROM image (55AA, x86
+    entry, PCIR identity, checksum) when a ROM window is configured; an owner
+    image can replace it.  The vPPB ROM BAR remains
+    register-only and the CXL component model does not advertise a ROM BAR
+    (both are optional PCIe choices).
 20. **LTR/VDM/PTM multi-DW payloads.**  The C++ model supports arbitrary DW
     payloads; the W5 VIP SV host agent is limited to one DW.
 21. **Mailbox command set.**  Opcodes outside the implemented whitelist
     return `Unsupported` with no silent success (for example 0x0107/0x0108
     GFD Enhanced Event Notification, 0x0109/0x010A Get/Set GAM Buffer,
-    0x4900+ GFD-only and 0x5717+).  DCD and Security Send/Receive are opt-in
-    and off by default.
+    0x4900+ GFD-only and 0x5717+).  DCD is opt-in and off by default;
+    0x4600/0x4601 are admitted only when the security envelope or the owner
+    passthrough hook is enabled.
 
 ## Validation status semantics
 

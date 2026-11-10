@@ -34,12 +34,14 @@
 #pragma once
 #include "cxl_dcd.h"
 #include "cxl_ecs.h"
+#include "cxl_event_notification.h"
 #include "cxl_event_policy.h"
 #include "cxl_features.h"
 #include "cxl_log_caps.h"
 #include "cxl_mailbox.h"
 #include "cxl_media_test.h"
 #include "cxl_security.h"
+#include "cxl_security_mailbox.h"
 #include "cxl_sparing.h"
 
 #include <array>
@@ -331,7 +333,21 @@ struct CxlType3Commands {
                        std::vector<std::uint8_t>* out, std::uint16_t* rc)>
         security_passthrough;
     std::uint64_t security_passthrough_ops = 0;
+    // Optional CXL Security Send/Receive envelope (0x4600/0x4601).  Disabled
+    // by default; the protocol semantics (e.g. TCG/SED) are owner handlers.
+    CxlSecurityMailbox security_mailbox;
     CxlEventInterruptPolicy event_policy;
+    // Opcode 0106h is component-originated on MCTP CCI (not a host mailbox
+    // request).  The owner can post/take the standard 2-byte notification
+    // payload through these helpers.
+    CxlEventNotificationQueue event_notifications;
+    bool notify_event(std::uint16_t events, std::string* err = nullptr) {
+        return event_notifications.post(events, err);
+    }
+    bool take_event_notification(std::uint16_t* events,
+                                 std::string* err = nullptr) {
+        return event_notifications.pop(events, err);
+    }
     CxlLogCaps log_caps;                     // CEL registered in ensure_defaults()
     CxlFeatureTable features;
     CxlSparing sparing;                      // CXL 3.2 memory sparing features

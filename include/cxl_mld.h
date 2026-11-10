@@ -34,6 +34,22 @@ struct CxlVppbPowerRail {
     std::uint32_t good_at() const { return delay_ticks + ramp_ticks + power_good_ticks; }
 };
 
+// Generic standard extended capability appended after the built-in vPPB
+// chain.  The first extra capability starts at 0x248 (the end of the DVSEC
+// block); body/rw_mask follow the PCIe extended-capability layout.
+struct CxlVppbExtCap {
+    std::uint16_t id = 0;
+    std::uint8_t  version = 1;
+    std::uint16_t off = 0;
+    std::uint16_t next = 0;
+    std::uint16_t size = 0;
+    std::vector<std::uint8_t> body;
+    std::vector<std::uint32_t> rw_mask;   // per body dword; absent => RO
+
+    std::uint32_t rd32(std::uint16_t rel) const;
+    void wr32(std::uint16_t rel, std::uint32_t v);
+};
+
 struct CxlVppbConfig {
     // ---- PCI Type 1 configuration header -----------------------------------
     std::uint16_t vendor_id = 0x1E98, device_id = 0x0002;
@@ -165,6 +181,21 @@ struct CxlVppbConfig {
     std::uint16_t dvsec_revision = 1;
     std::uint16_t dvsec_id = 0x0001u;          // model-defined DVSEC ID
     std::uint32_t dvsec_reg0 = 0, dvsec_reg1 = 0;
+
+    // ---- R6: standard extended capabilities after the DVSEC @0x234 --------
+    // Power Budgeting / ARI / PRI / TPH / PASID / Secondary PCIe / NPEM /
+    // VF ReBAR / PL16 / PL32 / PL64.  The generic read/write path serves
+    // offsets >= kExtCapBase; the DVSEC next pointer links to the first cap.
+    static constexpr std::uint16_t kExtCapBase = 0x248;
+    std::uint16_t dvsec_next = 0;
+    std::vector<CxlVppbExtCap> extra_caps;
+    std::uint16_t ext_tail = 0;
+
+    CxlVppbConfig();
+    std::uint16_t add_ext_cap(CxlVppbExtCap c);
+    void build_default_ext_caps();
+    bool read_extra(std::uint32_t off, std::uint32_t* val) const;
+    bool write_extra(std::uint32_t off, std::uint32_t val);
 
     // ---- Slot power / presence state --------------------------------------
     bool present = true;

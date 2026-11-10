@@ -269,11 +269,14 @@ Not covered / explicit boundaries:
 - Dynamic Capacity (DCD) is opt-in and off by default; multi-host/tag
   sharing is implemented (1..8 hosts), but the model does not own a media
   array or perform scans (owner hooks connect a device backend).
-- Security Send/Receive is an owner-hook passthrough (TCG/SED protocol not
-  modeled).  IDE key/stream/IV management and AES-256-GCM are modeled
-  (IDE_KM and IDE crypto benches pass); real RTL link-layer IDE framing/TSP
-  is owned by the customer link-layer IP.  DOE supports Discovery, CDAT and
-  an optional IDE_KM object; the CMA object is rejected.
+- Security Send/Receive implements the CXL transport envelope (SECP/SPSP/
+  reserved bytes/protocol data) with a protocol-handler registry and matching
+  response queue; TCG/SED payload formats remain owner-supplied, and the
+  feature is off by default.  IDE key/stream/IV management and AES-256-GCM
+  are modeled (IDE_KM and IDE crypto benches pass); real RTL link-layer IDE
+  framing/TSP is owned by the customer link-layer IP.  DOE supports
+  Discovery, CDAT, CMA/Secured CMA and an optional IDE_KM object;
+  unrecognized objects are rejected.
 - Mailbox opcodes outside the implemented whitelist return `Unsupported`
   (for example 0x0107/0x0108 GFD Enhanced Event Notification, 0x0109/0x010A
   Get/Set GAM Buffer, 0x4900+, 0x5717+).  0x0106 Event Notification is modeled
@@ -281,16 +284,20 @@ Not covered / explicit boundaries:
 - CPMU provides counter/register blocks and an optional bridge to an MSI-X
   table/root IRQ; platform-specific 64-KB RegLoc block mapping remains an
   owner responsibility.
-- VPD is a register window; ROM BAR contents remain a separate profile.
+- VPD is a register window.  The EP/PCIe base model synthesizes a standard
+  expansion-ROM image when a ROM window is configured (signature, x86 entry,
+  PCIR identity and checksum); an owner image can be installed instead.  The
+  vPPB ROM BAR is register-only and the CXL component model does not
+  advertise a ROM BAR (both are optional PCIe choices).
 - LTR/VDM/PTM multi-DW payloads are supported by the C++ model; the W5 VIP
   host agent is limited to one DW.
 - Customer `swdn` + EP DUT RTL co-simulation (M6.2-M6.7): requires the customer
   environment, EP peer, and full DPI bridge.  The model-side docking vectors,
   port check, force subsets, and wrapper are complete; the local four-port
   swdn + RTL-EP integration passes M1-M5 (14/14).
-- Customer RTL PBR/256B profile: the delivered DWC configuration has PBR
+- Customer RTL PBR/256B profile: the delivered CTL configuration has PBR
   disabled; the model spec profile is validated, the RTL profile is SKIP.
-- PHY electrical/link training/CRC/retry below the DWC app interface.
+- PHY electrical/link training/CRC/retry below the CTL app interface.
 - Physical media poison injection; the model maintains the poison list only.
 - NTB and DM are minimal model-defined scope (F1a/F1b), not full vendor APIs.
 
