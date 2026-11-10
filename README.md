@@ -43,7 +43,6 @@ tb/uvm_ioctl/            UVM TB + ioctl-style test selector (porting entry point
 cosim/cxl/axi/           optional 128-bit AXI4 master + external-SRAM bench
 tools/                   port check, DUT vector/force generators
 USER_GUIDE_CXL.md        build/API/console/TC/ioctl/trace/DTS guide
-FAQ.txt                  standalone tests / top files / VIP / DUT / UVM FAQ
 NOT_SUPPORTED_CXL.md     scope, IP ledger, not-supported list
 evidence/VALIDATION.md   validation summary
 ```
@@ -84,6 +83,70 @@ sh tb/uvm_ioctl/run.sh quit
 
 Set `VCS` to the customer simulator command if it is not `vcs`; see
 `tb/uvm_ioctl/README.md` for porting notes.
+
+### Calling the model from a customer UVM environment
+
+Do not restructure your UVM testbench around the model.  The model is adapted
+to the customer TB through a bridge/agent package supplied as part of the
+integration.  The customer keeps its existing environment, sequences,
+scoreboard and tests; only a bridge instance and its bindings are added.
+
+**Mode A -- pin-level bridge (customer RTL DUT)**
+
+1. File to instantiate:
+
+   `cxl_model_bridge.sv`
+
+   Supplied in the integration package.  It exposes the grouped CXL face
+   defined by `rtl_port/cxl_top_port_grouped.sv`.  Connect the customer DUT's
+   CXL pins to it.  `cxl_top_port_grouped.sv` is only the port contract, not
+   the model.
+
+2. VCS command to load the model:
+
+   ```sh
+   vcs -full64 -sverilog -timescale=1ns/1ps \
+       -sv_lib <BRIDGE>/build/libcxl_model_bridge \
+       <your_tb_files> <BRIDGE>/cxl_model_bridge.sv
+   ```
+
+   The `.so` contains `libcxl_switch_model.a` and the DPI bridge.  No socket,
+   CLI or model test shell is needed.
+
+Keep the existing UVM sequences and scoreboard; only add the bridge instance
+and the pin connections.
+
+**Mode B -- TLM/UVM bridge (customer VIP-based TB)**
+
+The bridge is a standard UVM agent with sequencer/driver/analysis ports.
+
+1. Connect the agent where the existing host/switch model or host VIP was.
+2. Your existing sequences and scoreboard remain unchanged.
+3. The agent converts your transaction type through an adapter layer that is
+   part of the supplied bridge; the customer does not implement the DPI
+   protocol or rewrite the TB.
+4. The agent calls the same C++ model through DPI.
+
+**Common integration steps**
+
+1. Provide the TB interface: RTL pins or UVM transaction type, number of
+   downstream ports, flit mode, DUT address map, and optional host-memory/
+   AXI backend.  The matching bridge is generated/configured for that
+   interface.
+2. For pin mode, load the delivered DPI bridge with VCS `-sv_lib`; for TLM
+   mode, link the UVM agent/DPI library.  No socket, CLI, or specific UVM
+   test is required.
+3. Add the bridge instance to the existing env/top and bind the existing
+   pins or TLM ports.
+4. Set model configuration: port count, 68B/256B/PBR profile, HDM/AXI
+   backend and timeouts.
+5. Run the existing tests.  Model completions, snoops, memory data and
+   events are returned through the bridge.
+
+The model is a host/root/switch component; the customer DUT/VIP remains the
+downstream endpoint.  The integration work is delivered on the model side as
+the bridge/agent; the customer TB does not need to adopt the model's own test
+shell or internal structure.
 
 AXI4 host-DDR attachment (optional; external SRAM acts as motherboard DDR):
 
