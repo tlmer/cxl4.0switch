@@ -126,20 +126,26 @@ Two supported connection modes:
 
 Mode A -- pin-level bridge (customer RTL DUT)
 ---------------------------------------------
-The bridge exposes the standard grouped CXL controller face, the same contract
-as rtl_port/cxl_top_port_grouped.sv: CXL.io client0/client1/RCPL/TRGT1, DBI,
-ELBI, CXL message, CXL.cache init/HM/DS/HS/DM, CXL.mem init/HM/DS/HS/DM,
-management, clocks and resets.
+(1) File to instantiate:
 
-  1. Instantiate the bridge next to the customer DUT.
-  2. Connect the DUT's CXL pins to the bridge; keep clocks, resets, local RAM,
-     PHY, VPD and other local faces in the customer TB.
-  3. The bridge runs the C++ model in a worker thread and services DPI
-     poll/complete calls from the simulator thread.  It presents the
-     host/root/switch behavior (enumeration, config, HDM, CXL.mem/cache,
-     mailbox, events).
-  4. Existing UVM sequences and scoreboard remain unchanged; they drive and
-     observe the DUT as before.
+      cxl_model_bridge.sv
+
+    Supplied in the integration package.  It exposes the grouped CXL face
+    defined by rtl_port/cxl_top_port_grouped.sv.  Connect the customer DUT's
+    CXL pins to it.  cxl_top_port_grouped.sv is only the port contract, not
+    the model.
+
+(2) VCS command to load the model:
+
+      vcs -full64 -sverilog -timescale=1ns/1ps \
+          -sv_lib <BRIDGE>/build/libcxl_model_bridge \
+          <your_tb_files> <BRIDGE>/cxl_model_bridge.sv
+
+    The .so contains libcxl_switch_model.a and the DPI bridge.  No socket,
+    CLI or model test shell is needed.
+
+Keep the existing UVM sequences and scoreboard; only add the bridge instance
+and the pin connections.
 
 Mode B -- TLM/UVM bridge (customer VIP-based TB)
 ------------------------------------------------
@@ -158,8 +164,9 @@ Common integration steps:
      downstream ports, flit mode, DUT address map, and optional host-memory/
      AXI backend.  The matching bridge is generated/configured for that
      interface.
-  2. Link the delivered DPI bridge with lib/libcxl_switch_model.a; no socket,
-     CLI, or specific UVM test is required.
+  2. For pin mode, load the delivered DPI bridge with VCS -sv_lib; for TLM
+     mode, link the UVM agent/DPI library.  No socket, CLI, or specific UVM
+     test is required.
   3. Add the bridge instance to the existing env/top and bind the existing
      pins or TLM ports.
   4. Set model configuration: port count, 68B/256B/PBR profile, HDM/AXI
