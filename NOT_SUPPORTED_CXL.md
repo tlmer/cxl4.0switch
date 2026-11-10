@@ -8,7 +8,7 @@ regression is **115/115 gates PASS, 0 FAIL**; the current tree has
 **122 gates**, with R7-R14 directed PASS but no full 122-gate rerun;
 43-bench capability suite PASS; delivery library
 **52 objects / 86 CXL public headers**; the `tlmer/cxl4.0switch` archive
-main commit `262cc5a1…` was verified by an independent staged smoke/console.
+was verified by an independent staged smoke/console.
 A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 (14/14); the customer-environment co-simulation (item 13) remains SKIP.
 
@@ -142,9 +142,11 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 
 - `TB_*: ALL PASS (n/n)` means every listed criterion passed.
 - Red variants must fail with the documented signature (see `evidence/`).
-- The 2026-11-10 model-side tree run is **115/115 gates PASS** plus the
-  43-bench capability suite; the released archive was verified by an
-  independent staged smoke/console.
+- The last complete model-side tree run (2026-11-10) is **115/115 gates
+  PASS** plus the 43-bench capability suite.  The current tree has **122
+  gates**; R7-R14 were run directly and pass, but a full 122-gate rerun was
+  not performed.  The released archive was verified by an independent
+  staged smoke/console.
 - DUT co-simulation and RTL-profile items remain `PENDING`/`SKIP` until the
   customer environment is available.
 
