@@ -67,10 +67,11 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
    the model's CXL.io PTH behavior is a model-level interpretation and the RTL
    profile skips it.
 9. **CCI opcodes outside the implemented set** (for example 5717h and later)
-   return `Unsupported`.  Mailbox opcodes 0107h-010Ah remain reserved /
-   Unsupported; 4900h+ is GFD-only.  Event Notification 0106h is modeled as
-   the component-originated MCTP CCI payload/queue, not a host mailbox
-   command.
+   return `Unsupported`.  Mailbox opcodes 0107h/0108h are GFD Enhanced Event
+   Notification and 0109h/010Ah are Get/Set GAM Buffer; they are GFD/GAE-only
+   and outside this Type-3/switch mailbox profile.  4900h+ is GFD-only.  Event
+   Notification 0106h is modeled as the component-originated MCTP CCI
+   payload/queue, not a host mailbox command.
 10. **3/6/12-way on a switch.**  CXL 4.0 permits 3/6/12-way only for CXL.mem
     device decoders; switch/USP target lists have 1/2/4/8 entries.  The model
     rejects 3/6/12-way on a switch with `Error Not Committed`.  This is a
@@ -116,7 +117,8 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 20. **LTR/VDM/PTM multi-DW payloads.**  The C++ model supports arbitrary DW
     payloads; the W5 VIP SV host agent is limited to one DW.
 21. **Mailbox command set.**  Opcodes outside the implemented whitelist
-    return `Unsupported` with no silent success (for example 0x0106-0x010A,
+    return `Unsupported` with no silent success (for example 0x0107/0x0108
+    GFD Enhanced Event Notification, 0x0109/0x010A Get/Set GAM Buffer,
     0x4900+ GFD-only and 0x5717+).  DCD and Security Send/Receive are opt-in
     and off by default.
 

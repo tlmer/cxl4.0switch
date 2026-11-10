@@ -275,9 +275,12 @@ Not covered / explicit boundaries:
   is owned by the customer link-layer IP.  DOE supports Discovery, CDAT and
   an optional IDE_KM object; the CMA object is rejected.
 - Mailbox opcodes outside the implemented whitelist return `Unsupported`
-  (for example 0x0106-0x010A, 0x4900+, 0x5717+).
-- CPMU provides counter/register blocks; multiple 64-KB RegLoc block mapping
-  and direct MSI-X integration are platform-owner responsibilities.
+  (for example 0x0107/0x0108 GFD Enhanced Event Notification, 0x0109/0x010A
+  Get/Set GAM Buffer, 0x4900+, 0x5717+).  0x0106 Event Notification is modeled
+  as the component-originated MCTP CCI payload/queue.
+- CPMU provides counter/register blocks and an optional bridge to an MSI-X
+  table/root IRQ; platform-specific 64-KB RegLoc block mapping remains an
+  owner responsibility.
 - VPD is a register window; ROM BAR contents remain a separate profile.
 - LTR/VDM/PTM multi-DW payloads are supported by the C++ model; the W5 VIP
   host agent is limited to one DW.
