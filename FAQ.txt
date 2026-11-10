@@ -1,0 +1,206 @@
+CXL Switch Model -- Frequently Asked Questions
+===============================================
+
+Paths below are relative to the model repository root unless noted otherwise.
+Replace <MODEL_ROOT> with the absolute path to the delivered model tree.
+
+Q1: How do I run the model's standalone tests?
+A1:
+The binary-only release contains independent checks that need only include/
+and lib/:
+
+  cd <MODEL_ROOT>
+  make -C smoke run
+  make -C console
+  ./console/cxl_switch_console --run-all
+  ./console/cxl_switch_console --tc all
+  ./console/cxl_switch_console --tc-cover
+
+The UVM control example under tb/uvm_ioctl/ is a separate standalone
+integration check:
+
+  cd tb/uvm_ioctl
+  sh run.sh build
+  sh run.sh sim
+  sh run.sh list
+  sh run.sh run all 1
+  sh run.sh coverage
+  sh run.sh quit
+
+The optional AXI4 host-DDR bench is run with:
+
+  sh cosim/cxl/axi/run.sh          # xsim
+  SIM=vcs sh cosim/cxl/axi/run.sh  # VCS
+
+The full source working tree additionally has a one-shot regression that
+covers the CXL gates and the non-NTB/DM parent subset:
+
+  cd <MODEL_ROOT>
+  sh run.sh
+
+Q2: Where is the simulation top file for the model?
+A2:
+The model itself is a C++ library; it has no single HDL top module.  Use the
+top that matches the integration level:
+
+  - RTL/model boundary:
+      rtl_port/cxl_top_port_grouped.sv
+      rtl_port/cxl_top_port_grouped.veo
+    This is the only RTL delivered.  It is a parameterized grouped-port
+    abstraction with no functional logic.
+
+  - UVM control/integration example:
+      tb/uvm_ioctl/cxl_uvm_tb.sv
+    Module name: cxl_uvm_tb_top.  tb/uvm_ioctl/run.sh builds it with
+    "-top cxl_uvm_tb_top".
+
+  - Optional AXI4 host-DDR pin-level bench:
+      cosim/cxl/axi/tb_cxl_axi_sram.sv
+      cosim/cxl/axi/cxl_axi_dpi_master.sv
+
+There is no downstream-port (swdn) or endpoint RTL in the model repository.
+
+Q3: How do I run the joint model + VIP test?
+A3:
+Use the customer's CXL VIP as the endpoint and the full model working tree as
+the host.  The binary-only release does not contain the DPI host agents used by
+this flow; the VIP overlay is also delivered separately under the customer's
+VIP license.  The step-by-step guide is:
+
+  <MODEL_ROOT>/VIP_EP_TEST_GUIDE.md
+
+Summary:
+
+  1. Install the licensed CXL Subsystem VIP and copy its tb_dut_cxl example to
+     a writable work tree:
+       cp -a <VIP_HOME>/examples/sverilog/cxl_test_suite_svt/tb_dut_cxl \
+             <WORK>/tb_dut_cxl
+
+  2. Point the model's VIP path at that work tree:
+       cd <MODEL_ROOT>/cosim/cxl
+       rm -f vip_design
+       ln -s <WORK> vip_design
+
+  3. Apply the overlay files under <WORK>/tb_dut_cxl.  The overlay is not part
+     of this repository; obtain it from the delivery package and apply it under
+     the customer's VIP license.  The overlay file list and copy commands are
+     in VIP_EP_TEST_GUIDE.md.
+
+  4. Build the model-host DPI library.  <pair-dir> is the controller-pair
+     directory in the delivered full model tree:
+       cd <MODEL_ROOT>
+       sh cosim/cxl/<pair-dir>/build_host_dpi.sh
+
+  5. Replace the reference absolute paths in compile_snps_sw_vip_model.f,
+     top_files and vcs_elab_options with the customer's paths.
+
+  6. Export the model topology/compile pair for BOTH build and run:
+       export SVT_CXL_SUBSYSTEM_TOPOLOGY_FILE=topology_snps_sw_vip_model.svi
+       export SVT_CXL_SUBSYSTEM_COMPILE_FILE=compile_snps_sw_vip_model.f
+     A correct build reports 1292 modules / 20 UDPs; the stock VIP-to-VIP
+     fallback reports 80 modules.
+
+  7. Build and run:
+       cd <WORK>/tb_dut_cxl
+       ./run_dut_cxl -buildonly cxl_io_random_mem_wr_rd vcsvlog
+
+       cd <MODEL_ROOT>
+       CXL_HOST_MEM_TRANSPORT=1 CXL_HOST_MEM_SMOKE=1 \
+       CXL_HOST_MEM_SMOKE_WRITE=1 \
+       CXL_HOST_MEM_TIMEOUT_S=60 CXL_HOST_CFG_TIMEOUT_S=120 \
+       sh cosim/cxl/w5_host/run_host_enum.sh cxl_io_random_mem_wr_rd
+
+The validated result is CXL.io link-up, enumeration, memory read and posted
+memory write/readback.  CXL.cache/CXL.mem over the serial link is not validated
+in this flow because the current controller configuration is Gen3 and CXL APN
+requires >=32 GT/s; use the separate Route-C VIP TL flow for CXL.cache/CXL.mem.
+
+Q4: How do I insert the customer's own DUT?
+A4:
+Use the grouped port abstraction as the model/DUT boundary:
+
+  rtl_port/cxl_top_port_grouped.sv
+  rtl_port/cxl_top_port_grouped.veo
+
+The module presents one packed vector per standard controller interface face
+and direction (CXL.io client0/client1/RCPL/TRGT1, DBI, ELBI, CXL message,
+CXL.cache init/HM/DS/HS/DM, CXL.mem init/HM/DS/HS/DM, management, clocks and
+resets).  Local RAM, PIPE/PHY, retry buffers, VPD, VMI, SII and MSI faces are
+kept by the customer and are intentionally outside this boundary.
+
+Steps:
+
+  1. Instantiate cxl_top_port_grouped with the customer's configuration.
+     Every group width is a module parameter; override the parameters for a
+     non-68B configuration.
+
+  2. Connect the customer DUT to the standard faces.  Preserve the element
+     order inside each grouped vector.  The private per-pin adapter and
+     simulator portmap are generated for the customer configuration and are
+     not part of the public package.
+
+  3. Follow the protocol rules in rtl_port/README.md:
+       - CXL.cachemem has no ready/halt; a valid beat is consumed when it
+         appears.
+       - Do not over-draw per-channel credits.
+       - Init uses req/ack; deinit is explicit.
+       - DBI cs stays asserted until ack; ack is exactly two cycles.
+       - Do not change a grouped vector between a valid beat and acceptance.
+
+  4. In the full source working tree, generate DUT docking vectors and
+     bring-up forces from the customer tree:
+       export CXL3SW_HOME=<customer_tree>
+       python3 tools/gen_cxl_dut_vectors.py
+       python3 tools/gen_cxl_dut_forces.py
+     The force files are testbench-only DUT configuration; include them in the
+     co-simulation harness or replace them with equivalent DBI writes.  Model
+     pass criteria must not depend on a force.
+
+  5. If the DUT is the endpoint behind a downstream port, also run the port
+     compatibility and docking-vector checks from the full model tree:
+       sh run.sh
+     The public binary release does not include the DUT RTL or the internal
+     four-port RTL-EP bench.
+
+Q5: How do I call the model from the customer's UVM environment?
+A5:
+Start from the UVM control template in tb/uvm_ioctl/:
+
+  tb/uvm_ioctl/cxl_uvm_tb.sv       UVM TB: run_phase polls a control socket
+  tb/uvm_ioctl/cxl_uvm_ctl.h/.cpp  DPI-C shim + Unix-socket transport
+  tb/uvm_ioctl/cxl_uvm_ctl_cli.cpp CLI: list/run/coverage/quit
+  tb/uvm_ioctl/run.sh              build/run helper
+
+The recommended integration is:
+
+  1. Build and exercise the template first:
+       cd tb/uvm_ioctl
+       sh run.sh build
+       sh run.sh sim
+       sh run.sh list
+       sh run.sh run all 1
+       sh run.sh coverage
+       sh run.sh quit
+
+  2. Keep the UVM/socket/CLI scaffolding.  In cxl_uvm_ctl.cpp, replace the
+     cxl_uvm_ctl_run() call to cxl_tc_execute() with your own dispatcher, or
+     add DPI functions that start your UVM sequences and drive your DUT.
+
+  3. Link the model library into the DPI shared object:
+       g++ -std=c++17 -O2 -fPIC -shared \
+           -I<MODEL_ROOT>/include -I<MODEL_ROOT>/tb/uvm_ioctl \
+           cxl_uvm_ctl.cpp <MODEL_ROOT>/lib/libcxl_switch_model.a \
+           -lpthread -ldl -lm -o libcxl_uvm_ctl.so
+
+     Compile the UVM TB with the simulator and link -L. -lcxl_uvm_ctl.
+
+  4. On the UVM side, cxl_uvm_tb.sv only polls the socket and prints results.
+     You can instantiate your own UVM environment and call the four
+     cxl_uvm_ctl_* completion functions after each command.
+
+  5. Add the customer's RTL/VIP compile and topology settings to run.sh or to
+     your own simulator script.  The UVM template has no PHY/VIP dependency.
+
+Boundary: tb/uvm_ioctl is a control/porting template, not a complete DUT or
+VIP regression.  Its model testcase results do not replace customer RTL/VIP
+sign-off.

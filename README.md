@@ -44,6 +44,7 @@ cosim/cxl/axi/           optional 128-bit AXI4 master + external-SRAM bench
 tools/                   port check, DUT vector/force generators
 USER_GUIDE_CXL.md        build/API/console/TC/ioctl/trace/DTS guide
 VIP_EP_TEST_GUIDE.md     customer CXL VIP endpoint CXL.io test guide
+FAQ.txt                  standalone tests / top files / VIP / DUT / UVM FAQ
 NOT_SUPPORTED_CXL.md     scope, IP ledger, not-supported list
 evidence/VALIDATION.md   validation summary
 ```
