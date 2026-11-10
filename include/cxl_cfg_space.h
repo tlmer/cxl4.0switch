@@ -100,6 +100,13 @@ struct CxlCfgSpace {
     bool          vpd_write_flag = false;
     std::vector<std::uint8_t> vpd_data;
     std::uint64_t vpd_writes = 0;      // writes to the read-only VPD area
+    // Owner-configurable VPD content.  The identifier is the 0x82 large
+    // resource (up to 255 bytes); each 3-byte tuple becomes one VPD-R field.
+    std::string vpd_identifier = "CXL-SW-MODEL";
+    std::vector<std::array<std::uint8_t, 3>> vpd_ro_fields{{0, 0, 0}};
+    void vpd_add_ro_field(std::uint8_t a, std::uint8_t b, std::uint8_t c) {
+        vpd_ro_fields.push_back({a, b, c});
+    }
 
     // Statistics (never silent).
     mutable std::uint64_t ur_count = 0;    // out-of-range config access

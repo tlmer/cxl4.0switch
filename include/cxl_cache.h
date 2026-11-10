@@ -24,6 +24,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -155,6 +156,20 @@ private:
 // ------------------------------------------------------- multi-device cache
 // P3.1: multiple Type 2 devices + a home directory (sharers + dirty owner).
 // Snoops use the real H2D.Req / D2H.Rsp / D2H.Data wire encoders.
+
+// Owner-selectable replacement policy.  The default (empty hook) is LRU with
+// a clean-first directory preference.  A hook sees only valid candidates and
+// returns the victim address; an unknown address falls back to LRU and is
+// counted in replace_hook_invalid.  Directory replacement requires
+// lru_replace=true (the existing capacity gate).
+struct CxlCacheReplaceCandidate {
+    std::uint64_t addr = 0;
+    std::uint64_t last_used = 0;
+    bool dirty = false;       // device: M line; directory: dirty owner present
+};
+using CxlCacheReplaceHook = std::function<std::uint64_t(
+    const std::vector<CxlCacheReplaceCandidate>&)>;
+
 struct CxlCacheMultiSystem {
     struct DevLine {
         bool valid = false;
@@ -192,6 +207,14 @@ struct CxlCacheMultiSystem {
     // least-recently-used device line is evicted (dirty lines write back).
     std::size_t max_device_lines = 0;
     std::uint64_t lru_device_evictions = 0;
+    // Optional owner replacement policies (empty => the LRU behavior above).
+    CxlCacheReplaceHook device_replace_hook;
+    CxlCacheReplaceHook directory_replace_hook;
+    std::uint64_t device_replace_calls = 0;
+    std::uint64_t directory_replace_calls = 0;
+    std::uint64_t policy_device_evictions = 0;
+    std::uint64_t policy_directory_evictions = 0;
+    std::uint64_t replace_hook_invalid = 0;
 
     // Red hooks.
     bool fault_skip_snoop = false;

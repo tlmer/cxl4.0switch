@@ -235,9 +235,9 @@ Batch: `--dts <path>`, `--run-all`, `--cover`, `--tc <id|all> [n]`,
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**122 gates**, with R7-R14 directed PASS but no full 122-gate rerun.
+**125 gates**, with R7-R17 directed PASS but no full 125-gate rerun.
 43-bench capability suite PASS; delivery library
-**52 objects / 86 CXL public headers**.  A local integration of four `swdn`
+**53 objects / 87 CXL public headers**.  A local integration of four `swdn`
 RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  The
 customer-environment co-simulation remains SKIP.
 
@@ -266,8 +266,10 @@ Not covered / explicit boundaries:
   selector mapping is implementation-defined.
 - Vendor-specific advanced-congestion metric (the congestion input and
   secondary penalty are model-level approximations).
-- CXL.cache TEE, vendor-specific multi-level replacement policies, long
-  multi-host soak tests.
+- CXL.cache TEE and long multi-host soak tests.  Device/directory replacement
+  hooks are provided for owner/vendor policies; the model ships LRU plus a
+  20k-operation functional coherence soak, not vendor algorithms or a
+  long-duration soak.
 - Dynamic Capacity (DCD) is opt-in and off by default; multi-host/tag
   sharing is implemented (1..8 hosts), but the model does not own a media
   array or perform scans (owner hooks connect a device backend).

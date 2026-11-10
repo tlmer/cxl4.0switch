@@ -5,9 +5,9 @@ This file is the customer-facing boundary statement.  A `SKIP` or
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**122 gates**, with R7-R14 directed PASS but no full 122-gate rerun;
+**125 gates**, with R7-R17 directed PASS but no full 125-gate rerun;
 43-bench capability suite PASS; delivery library
-**52 objects / 86 CXL public headers**; the `tlmer/cxl4.0switch` archive
+**53 objects / 87 CXL public headers**; the `tlmer/cxl4.0switch` archive
 was verified by an independent staged smoke/console.
 A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 (14/14); the customer-environment co-simulation (item 13) remains SKIP.
@@ -62,9 +62,12 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 6. **Vendor advanced-congestion algorithm.**  The congestion metric is an input
    and `secondary_penalty` is a model approximation; the vendor algorithm is
    not reverse-engineered.
-7. **CXL.cache TEE**, vendor-specific multi-level replacement policies, and
-   long multi-host soak/stress.  The functional MESI model covers I/S/E/M,
-   snoop, eviction, multi-device directory, CQID OOO, and LRU.
+7. **CXL.cache TEE** and long multi-host soak/stress.  The functional MESI
+   model covers I/S/E/M, snoop, eviction, multi-device directory, CQID OOO
+   and LRU.  Device-level and directory-level replacement hooks are provided
+   for owner/vendor policies (the model ships LRU and a 20k-operation
+   functional coherence soak; vendor algorithms and long-duration soak are
+   not shipped).
 8. **CXL.io PTH/PBR.**  The customer RTL lacks the relevant CXL.io PBR fields;
    the model's CXL.io PTH behavior is a model-level interpretation and the RTL
    profile skips it.
@@ -118,10 +121,11 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     table/root IRQ.  Additional 64-KB RegLoc blocks can be registered through
     the owner API with alignment/overlap checks; mapping them into a specific
     platform's DVSEC layout remains an owner responsibility.
-19. **VPD / ROM.**  The VPD register window is implemented.  The EP/PCIe
-    base model now synthesizes a standard expansion-ROM image (55AA, x86
-    entry, PCIR identity, checksum) when a ROM window is configured; an owner
-    image can replace it.  The vPPB ROM BAR remains
+19. **VPD / ROM.**  The VPD register window is implemented, with
+    owner-configurable identifier and VPD-R fields.  The EP/PCIe base model
+    now synthesizes a standard expansion-ROM image (55AA, x86 entry, PCIR
+    identity, checksum) when a ROM window is configured; an owner image can
+    replace it.  The vPPB ROM BAR remains
     register-only and the CXL component model does not advertise a ROM BAR
     (both are optional PCIe choices).
 20. **LTR/VDM/PTM multi-DW payloads.**  The C++ model supports arbitrary DW
@@ -133,8 +137,10 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     GFD-only and 0x5717+).  0x0107/0x0108 are modeled as GFD-originated
     enhanced-event VDM payloads (encoding/decoding, reserved-bit and length
     checks), and 0x0109/0x010A as GAE GAM Buffer command/ring helpers
-    (32-byte entries, 2..256 entries, overflow/wrap); they are not Type-3
-    host mailbox commands and the GFD/GAE transport remains platform-owned.
+    (32-byte entries, 2..256 entries, overflow/wrap).  The model also composes
+    a GAE endpoint with a bounded GFD 0108 VDM inbox; they are not Type-3 host
+    mailbox commands, and the real fabric/VDM transport and host GAM-buffer
+    memory remain platform-owned.
     DCD is opt-in and off by default; 0x4600/0x4601 are admitted only when
     the security envelope or the owner passthrough hook is enabled.
 
@@ -144,7 +150,7 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 - Red variants must fail with the documented signature (see `evidence/`).
 - The last complete model-side tree run (2026-11-10) is **115/115 gates
   PASS** plus the 43-bench capability suite.  The current tree has **122
-  gates**; R7-R14 were run directly and pass, but a full 122-gate rerun was
+  gates**; R7-R17 were run directly and pass, but a full 125-gate rerun was
   not performed.  The released archive was verified by an independent
   staged smoke/console.
 - DUT co-simulation and RTL-profile items remain `PENDING`/`SKIP` until the
