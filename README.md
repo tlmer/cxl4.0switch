@@ -28,7 +28,7 @@ RTL.
   coverage report, performance windows, console utilities
 - Configurable ports `N = 1..32`; NTB/DM minimal model-defined scope (F1a/F1b)
 - The only RTL in this repository is the port adapter/tie-off/DPI stub.
-  PHY/link training/DLL retry belong to the downstream CTL RTL.
+  PHY/link training/DLL retry belong to the downstream DWC RTL.
 
 ## Layout
 
@@ -43,6 +43,7 @@ tb/uvm_ioctl/            UVM TB + ioctl-style test selector (porting entry point
 cosim/cxl/axi/           optional 128-bit AXI4 master + external-SRAM bench
 tools/                   port check, DUT vector/force generators
 USER_GUIDE_CXL.md        build/API/console/TC/ioctl/trace/DTS guide
+VIP_EP_TEST_GUIDE.md     customer CXL VIP endpoint CXL.io test guide
 NOT_SUPPORTED_CXL.md     scope, IP ledger, not-supported list
 evidence/VALIDATION.md   validation summary
 ```
