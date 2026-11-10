@@ -44,7 +44,7 @@ plain-C++ library remains SystemC-free.
 | `TB_CXL_SC_DUT` (real swdn pair DUT via SC channel agent, VCS SystemC) | 5/5 (link up @99.56 µs, init, H2D/M2S crossing) |
 
 P1–P5 SC coverage matrix: **27 / 0 / 0** (full / partial / pending).
-All SC gates above passed inside the 2026-11-10 115-gate full-tree run.
+All SC gates above passed inside the 2026-11-10 115-gate full regression run.
 The model-host role was additionally exercised against an external device
 VIP in a separate co-simulation flow (CXL.cache read/write-pull, CXL.mem,
 and BI response injection); that flow is internal and is not part of this
@@ -74,7 +74,7 @@ helpers remain internal to the SystemC layer.
   MC/BC/MemRd M1-M5 **14/14** and the K12-3/K12-7 checks; this is an
   internal integration result and does not replace customer-environment
   co-simulation.
-- Customer RTL PBR/256B profile: the delivered CTL configuration has PBR
+- Customer RTL PBR/256B profile: the delivered DWC configuration has PBR
   disabled; the model spec profile is validated.
 - PHY electrical/link training/CRC/retry, physical media poison path,
   vendor-specific slot power and GIM internal GFD mapping.

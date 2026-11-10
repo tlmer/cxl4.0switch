@@ -32,15 +32,9 @@ The optional AXI4 host-DDR bench is run with:
   sh cosim/cxl/axi/run.sh          # xsim
   SIM=vcs sh cosim/cxl/axi/run.sh  # VCS
 
-The full source working tree additionally has a one-shot regression that
-covers the CXL gates and the non-NTB/DM parent subset:
-
-  cd <MODEL_ROOT>
-  sh run.sh
-
 Q2: Where is the simulation top file for the model?
 A2:
-The model itself is a C++ library; it has no single HDL top module.  Use the
+The model is delivered as a library; it has no single HDL top module.  Use the
 top that matches the integration level:
 
   - RTL/model boundary:
@@ -62,10 +56,10 @@ There is no downstream-port (swdn) or endpoint RTL in the model repository.
 
 Q3: How do I run the joint model + VIP test?
 A3:
-Use the customer's CXL VIP as the endpoint and the full model working tree as
-the host.  The binary-only release does not contain the DPI host agents used by
-this flow; the VIP overlay is also delivered separately under the customer's
-VIP license.  The step-by-step guide is:
+Use the customer's CXL VIP as the endpoint with the model's VIP integration
+package.  The binary-only library archive alone is not sufficient for this
+flow; the VIP overlay and integration package are delivered separately under
+the customer's VIP license.  The step-by-step guide is:
 
   <MODEL_ROOT>/VIP_EP_TEST_GUIDE.md
 
@@ -86,13 +80,11 @@ Summary:
      the customer's VIP license.  The overlay file list and copy commands are
      in VIP_EP_TEST_GUIDE.md.
 
-  4. Build the model-host DPI library.  <pair-dir> is the controller-pair
-     directory in the delivered full model tree:
-       cd <MODEL_ROOT>
-       sh cosim/cxl/<pair-dir>/build_host_dpi.sh
+  4. Build the model-host DPI library using the integration package's
+     provided script (see the guide).
 
-  5. Replace the reference absolute paths in compile_snps_sw_vip_model.f,
-     top_files and vcs_elab_options with the customer's paths.
+  5. Apply the path substitutions listed in the guide for the customer's
+     VIP and controller-configuration locations.
 
   6. Export the model topology/compile pair for BOTH build and run:
        export SVT_CXL_SUBSYSTEM_TOPOLOGY_FILE=topology_snps_sw_vip_model.svi
@@ -147,8 +139,8 @@ Steps:
        - DBI cs stays asserted until ack; ack is exactly two cycles.
        - Do not change a grouped vector between a valid beat and acceptance.
 
-  4. In the full source working tree, generate DUT docking vectors and
-     bring-up forces from the customer tree:
+  4. If the DUT docking utility package is provided, generate DUT docking
+     vectors and bring-up forces from the customer tree:
        export CXL3SW_HOME=<customer_tree>
        python3 tools/gen_cxl_dut_vectors.py
        python3 tools/gen_cxl_dut_forces.py
@@ -156,11 +148,9 @@ Steps:
      co-simulation harness or replace them with equivalent DBI writes.  Model
      pass criteria must not depend on a force.
 
-  5. If the DUT is the endpoint behind a downstream port, also run the port
-     compatibility and docking-vector checks from the full model tree:
-       sh run.sh
-     The public binary release does not include the DUT RTL or the internal
-     four-port RTL-EP bench.
+  5. Port compatibility and docking-vector checks are part of the DUT
+     integration service.  The public release does not include DUT RTL; a
+     local four-port RTL-EP bench is not shipped.
 
 Q5: How do I call the model from the customer's UVM environment?
 A5:

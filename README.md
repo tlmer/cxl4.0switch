@@ -103,7 +103,7 @@ DTS profile:
 
 ## Validation status
 
-The model-side feature set is verified by a **115-gate full-tree regression
+The model-side feature set is verified by a **115-gate model-side regression
 (0 FAIL)** that includes a 43-bench capability suite, plus DTS,
 testcase/ioctl/trace/coverage/perf, DUT-docking vectors, port compatibility
 check, independent library smoke, and console runs.  A local integration of
