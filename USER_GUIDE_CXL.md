@@ -278,9 +278,12 @@ Not covered / explicit boundaries:
   Discovery, CDAT, CMA/Secured CMA and an optional IDE_KM object;
   unrecognized objects are rejected.
 - Mailbox opcodes outside the implemented whitelist return `Unsupported`
-  (for example 0x0107/0x0108 GFD Enhanced Event Notification, 0x0109/0x010A
-  Get/Set GAM Buffer, 0x4900+, 0x5717+).  0x0106 Event Notification is modeled
-  as the component-originated MCTP CCI payload/queue.
+  (for example 0x4900+, 0x5717+).  0x0106 Event Notification is modeled as
+  the component-originated MCTP CCI payload/queue.  0x0107/0x0108 are
+  GFD-originated enhanced-event VDM payloads (encode/decode helpers), and
+  0x0109/0x010A are GAE-only Get/Set GAM Buffer helpers with a 32-byte-entry
+  circular buffer; they are not Type-3 host mailbox commands and the
+  GFD/GAE transport is platform-owned.
 - CPMU provides counter/register blocks and an optional bridge to an MSI-X
   table/root IRQ; platform-specific 64-KB RegLoc block mapping remains an
   owner responsibility.

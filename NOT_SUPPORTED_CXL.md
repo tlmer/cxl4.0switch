@@ -67,11 +67,11 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
    the model's CXL.io PTH behavior is a model-level interpretation and the RTL
    profile skips it.
 9. **CCI opcodes outside the implemented set** (for example 5717h and later)
-   return `Unsupported`.  Mailbox opcodes 0107h/0108h are GFD Enhanced Event
-   Notification and 0109h/010Ah are Get/Set GAM Buffer; they are GFD/GAE-only
-   and outside this Type-3/switch mailbox profile.  4900h+ is GFD-only.  Event
-   Notification 0106h is modeled as the component-originated MCTP CCI
-   payload/queue, not a host mailbox command.
+   return `Unsupported`.  0107h/0108h are modeled as GFD-originated
+   enhanced-event VDM payloads, and 0109h/010Ah as GAE GAM Buffer command/ring
+   helpers; they are GFD/GAE-only and are not Type-3 host mailbox commands.
+   4900h+ is GFD-only.  Event Notification 0106h is modeled as the
+   component-originated MCTP CCI payload/queue, not a host mailbox command.
 10. **3/6/12-way on a switch.**  CXL 4.0 permits 3/6/12-way only for CXL.mem
     device decoders; switch/USP target lists have 1/2/4/8 entries.  The model
     rejects 3/6/12-way on a switch with `Error Not Committed`.  This is a
@@ -127,11 +127,14 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     256-bit beat; a directed 2-DW VDM was accepted in the W5 run.  LTR and PTM
     messages are one-DW by definition.
 21. **Mailbox command set.**  Opcodes outside the implemented whitelist
-    return `Unsupported` with no silent success (for example 0x0107/0x0108
-    GFD Enhanced Event Notification, 0x0109/0x010A Get/Set GAM Buffer,
-    0x4900+ GFD-only and 0x5717+).  DCD is opt-in and off by default;
-    0x4600/0x4601 are admitted only when the security envelope or the owner
-    passthrough hook is enabled.
+    return `Unsupported` with no silent success (for example 0x4900+
+    GFD-only and 0x5717+).  0x0107/0x0108 are modeled as GFD-originated
+    enhanced-event VDM payloads (encoding/decoding, reserved-bit and length
+    checks), and 0x0109/0x010A as GAE GAM Buffer command/ring helpers
+    (32-byte entries, 2..256 entries, overflow/wrap); they are not Type-3
+    host mailbox commands and the GFD/GAE transport remains platform-owned.
+    DCD is opt-in and off by default; 0x4600/0x4601 are admitted only when
+    the security envelope or the owner passthrough hook is enabled.
 
 ## Validation status semantics
 
