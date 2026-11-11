@@ -13,9 +13,12 @@
 //     * host snoop SnpInv/SnpData/SnpCur -> D2H Rsp (+ D2H Data when dirty)
 //     * home reads/writes snoop the device first and absorb dirty data
 //
-//   Not implemented here (explicit ledger): multi-device snoop filter/directory,
-//   HDM-DB/BISnp flows (see cxl_emd_bi), TEE, and out-of-order UQID/CQID
-//   tracking beyond the single outstanding request used by this model.
+//   A model-level TEE trust boundary is included (secure ranges, per-line
+//   TEE tags, owner protect/integrity hooks); it is a functional framework,
+//   not a production cipher.  Not implemented here (explicit ledger):
+//   multi-device snoop filter/directory in this single-device class,
+//   HDM-DB/BISnp flows (see cxl_emd_bi), and out-of-order UQID/CQID tracking
+//   beyond the single outstanding request used by this model.
 // -----------------------------------------------------------------------------
 #pragma once
 #include "cxl_axi_master.h"
@@ -89,6 +92,48 @@ bool cxl_cache_decode(CxlCacheChan ch, CxlFlitMode mode, const CxlPacked& in,
                       CxlCacheFields* f, std::string* err = nullptr);
 std::string cxl_cache_msg_string(CxlCacheChan ch, const CxlCacheFields& f);
 
+// ------------------------------------------------------------ CXL.cache TEE
+// Model-level trust boundary for cached lines.  Secure ranges are plaintext
+// only inside a cache line tagged for TEE; a non-TEE access to a secure range
+// is rejected, and a TEE access to a non-secure range is rejected.  Optional
+// owner hooks protect/verify the line at the home-memory boundary (identity
+// when unset).  The hook transform must be reversible from (addr, key_id);
+// this is a functional framework, not a production cipher.
+struct CxlCacheTee {
+    struct Range {
+        std::uint64_t base = 0;
+        std::uint64_t size = 0;
+    };
+    bool enabled = false;
+    std::vector<Range> ranges;
+    std::uint64_t key_id = 0;            // opaque owner key selector
+    using ProtectHook = std::function<bool(std::uint64_t addr,
+                                           std::array<std::uint8_t, 64>& data,
+                                           bool encrypt, std::string* err)>;
+    using IntegrityHook = std::function<bool(std::uint64_t addr,
+                                             const std::array<std::uint8_t, 64>& data,
+                                             std::string* err)>;
+    ProtectHook protect;
+    IntegrityHook integrity;
+
+    std::uint64_t tee_reads = 0, tee_writes = 0;
+    std::uint64_t plain_denied = 0, tee_denied = 0;
+    std::uint64_t line_fills = 0;
+    std::uint64_t protect_calls = 0, unprotect_calls = 0;
+    std::uint64_t integrity_checks = 0, integrity_fail = 0;
+    std::uint64_t protect_fail = 0;
+
+    bool add_range(std::uint64_t base, std::uint64_t size);
+    bool contains(std::uint64_t addr) const;
+    bool allow(std::uint64_t addr, bool tee_access, bool write,
+               std::string* err = nullptr);
+    bool protect_line(std::uint64_t addr, std::array<std::uint8_t, 64>& data,
+                      bool encrypt, std::string* err = nullptr);
+    bool check_line(std::uint64_t addr, const std::array<std::uint8_t, 64>& data,
+                    std::string* err = nullptr);
+    void reset_stats();
+};
+
 // ------------------------------------------------------------------- home
 struct CxlCacheHome {
     std::map<std::uint64_t, std::array<std::uint8_t, 64>> mem;
@@ -114,9 +159,11 @@ struct CxlCacheSystem {
     struct Line {
         bool valid = false;
         CxlCacheState state = CxlCacheState::I;
+        bool tee = false;                 // line was filled by a TEE access
         std::array<std::uint8_t, 64> data{};
     };
     std::map<std::uint64_t, Line> lines;
+    CxlCacheTee tee;
 
     // Statistics (never silent).
     std::uint64_t cache_hits = 0, cache_misses = 0, evictions = 0;
@@ -136,21 +183,40 @@ struct CxlCacheSystem {
     bool cpu_read_own(std::uint64_t addr, void* out, std::string* err = nullptr);
     bool cpu_write(std::uint64_t addr, const void* data, std::string* err = nullptr);
     bool cpu_evict(std::uint64_t addr, std::string* err = nullptr);
+    bool cpu_read_tee(std::uint64_t addr, void* out, std::string* err = nullptr);
+    bool cpu_read_own_tee(std::uint64_t addr, void* out, std::string* err = nullptr);
+    bool cpu_write_tee(std::uint64_t addr, const void* data, std::string* err = nullptr);
 
     // Host-side operations (home agent snoops the device first).
     bool host_read(std::uint64_t addr, void* out, std::string* err = nullptr);
     bool host_write(std::uint64_t addr, const void* data, std::string* err = nullptr);
+    bool host_read_tee(std::uint64_t addr, void* out, std::string* err = nullptr);
+    bool host_write_tee(std::uint64_t addr, const void* data, std::string* err = nullptr);
 
     // Observability.
     CxlCacheState state_of(std::uint64_t addr) const;
     bool line_copy(std::uint64_t addr, void* out) const;
+    bool line_tee(std::uint64_t addr) const;
 
 private:
     bool wire(CxlCacheChan ch, CxlCacheFields in, CxlCacheFields* out, std::string* err);
-    bool request(std::uint64_t addr, CxlCacheReq op, CxlCacheFields* go,
-                 CxlCacheFields* rsp, std::string* err);
-    bool snoop_device(std::uint64_t addr, CxlCacheSnoop snp, std::string* err);
+    bool request(std::uint64_t addr, CxlCacheReq op, bool tee_access,
+                 CxlCacheFields* go, CxlCacheFields* rsp, std::string* err);
+    bool snoop_device(std::uint64_t addr, CxlCacheSnoop snp, bool tee_access,
+                      std::string* err);
     bool evict_line(std::uint64_t addr, bool dirty, std::string* err);
+    bool cpu_read_impl(std::uint64_t addr, void* out, bool tee_access,
+                       std::string* err);
+    bool cpu_read_own_impl(std::uint64_t addr, void* out, bool tee_access,
+                           std::string* err);
+    bool cpu_write_impl(std::uint64_t addr, const void* data, bool tee_access,
+                        std::string* err);
+    bool host_read_impl(std::uint64_t addr, void* out, bool tee_access,
+                        std::string* err);
+    bool host_write_impl(std::uint64_t addr, const void* data, bool tee_access,
+                         std::string* err);
+    bool read_home(std::uint64_t addr, void* out, std::string* err);
+    bool write_home(std::uint64_t addr, const void* data, std::string* err);
 };
 
 // ------------------------------------------------------- multi-device cache
@@ -174,6 +240,7 @@ struct CxlCacheMultiSystem {
     struct DevLine {
         bool valid = false;
         CxlCacheState state = CxlCacheState::I;
+        bool tee = false;                          // TEE-filled line
         std::array<std::uint8_t, 64> data{};
         std::uint64_t last_used = 0;               // per-device LRU stamp
     };
@@ -185,6 +252,7 @@ struct CxlCacheMultiSystem {
 
     CxlFlitMode mode = CxlFlitMode::B68;
     CxlCacheHome home;
+    CxlCacheTee tee;
     std::vector<Dev> dev;
     // Level-2 home directory: one entry per cached line with all sharers and
     // an optional dirty owner.
@@ -227,12 +295,19 @@ struct CxlCacheMultiSystem {
     bool dev_read_own(int id, std::uint64_t addr, void* out, std::string* err = nullptr);
     bool dev_write(int id, std::uint64_t addr, const void* data, std::string* err = nullptr);
     bool dev_evict(int id, std::uint64_t addr, std::string* err = nullptr);
+    bool dev_read_tee(int id, std::uint64_t addr, void* out, std::string* err = nullptr);
+    bool dev_read_own_tee(int id, std::uint64_t addr, void* out, std::string* err = nullptr);
+    bool dev_write_tee(int id, std::uint64_t addr, const void* data,
+                       std::string* err = nullptr);
 
     bool host_read(std::uint64_t addr, void* out, std::string* err = nullptr);
     bool host_write(std::uint64_t addr, const void* data, std::string* err = nullptr);
+    bool host_read_tee(std::uint64_t addr, void* out, std::string* err = nullptr);
+    bool host_write_tee(std::uint64_t addr, const void* data, std::string* err = nullptr);
 
     CxlCacheState state_of(int id, std::uint64_t addr) const;
     bool line_copy(int id, std::uint64_t addr, void* out) const;
+    bool line_tee(int id, std::uint64_t addr) const;
     int owner_of(std::uint64_t addr) const;      // -1 if none
     std::size_t sharer_count(std::uint64_t addr) const;
 
@@ -242,6 +317,7 @@ struct CxlCacheMultiSystem {
         int dev = -1;
         std::uint16_t cqid = 0;
         bool write = false;
+        bool tee = false;
         std::uint64_t addr = 0;
         std::array<std::uint8_t, 64> data{};
     };
@@ -253,6 +329,10 @@ struct CxlCacheMultiSystem {
                      std::string* err = nullptr);
     bool submit_write(int id, std::uint64_t addr, const void* data,
                       std::uint16_t cqid, std::string* err = nullptr);
+    bool submit_read_tee(int id, std::uint64_t addr, std::uint16_t cqid,
+                         std::string* err = nullptr);
+    bool submit_write_tee(int id, std::uint64_t addr, const void* data,
+                          std::uint16_t cqid, std::string* err = nullptr);
     bool complete(int id, std::uint16_t cqid, void* out = nullptr,
                   std::string* err = nullptr);
     bool pending_cqid(int id, std::uint16_t cqid) const;
@@ -268,6 +348,22 @@ private:
     bool evict_directory_line(std::uint64_t addr, std::string* err);
     bool reserve_device_line(int id, std::uint64_t addr, std::string* err);
     bool evict_device_line(int id, std::uint64_t addr, std::string* err);
+    bool dev_read_impl(int id, std::uint64_t addr, void* out, bool tee_access,
+                       std::string* err);
+    bool dev_read_own_impl(int id, std::uint64_t addr, void* out,
+                           bool tee_access, std::string* err);
+    bool dev_write_impl(int id, std::uint64_t addr, const void* data,
+                        bool tee_access, std::string* err);
+    bool host_read_impl(std::uint64_t addr, void* out, bool tee_access,
+                        std::string* err);
+    bool host_write_impl(std::uint64_t addr, const void* data, bool tee_access,
+                         std::string* err);
+    bool submit_read_impl(int id, std::uint64_t addr, std::uint16_t cqid,
+                          bool tee_access, std::string* err);
+    bool submit_write_impl(int id, std::uint64_t addr, const void* data,
+                           std::uint16_t cqid, bool tee_access, std::string* err);
+    bool read_home(std::uint64_t addr, void* out, std::string* err);
+    bool write_home(std::uint64_t addr, const void* data, std::string* err);
 };
 
 } // namespace cxl_tlm

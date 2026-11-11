@@ -16,7 +16,7 @@ RTL.
 - Complete PCIe configuration base (Type0/Type1, BAR sizing/MSE, standard and
   extended capability chains) and endpoint/cascaded-switch enumeration
   (model-side; the endpoint/cascade HDM path is verified through the model)
-- CXL.cache Type-2 MESI, multi-device directory, CQID out-of-order, LRU limits and owner replacement hooks
+- CXL.cache Type-2 MESI, multi-device directory, CQID out-of-order, LRU limits, owner replacement hooks, and a TEE trust boundary (secure ranges, line tags, owner protect/integrity hooks)
 - PBR: PTH, SPID/DPID, FAST/LDST/IDT, Direct P2P, multi-level fabric/ISL/G-FAM
 - PBR switch CCI, RGT 256 / Table 7-87 mix and advanced congestion avoidance
 - MLD/FMLD/vCS, vPPB Type-1 configuration, hot-plug/power sequencing
@@ -168,8 +168,8 @@ The model-side feature set was verified by a **115-gate model-side
 regression (0 FAIL)** that includes a 43-bench capability suite, plus DTS,
 testcase/ioctl/trace/coverage/perf, DUT-docking vectors, port compatibility
 check, independent library smoke, and console runs.  The current tree has
-127 gates; the added R7-R19 feature gates were run directly and pass, while
-a complete 127-gate rerun has not been performed, so 127/127 is not claimed.  A local integration of
+128 gates; the added R7-R20 feature gates were run directly and pass, while
+a complete 128-gate rerun has not been performed, so 128/128 is not claimed.  A local integration of
 four `swdn` RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  See
 `evidence/VALIDATION.md` for counts and artifacts.  Customer `swdn` + EP DUT
 RTL co-simulation and the RTL PBR/256B profile remain pending the customer
@@ -181,7 +181,8 @@ limits are enumerated in `NOT_SUPPORTED_CXL.md`.
 See `NOT_SUPPORTED_CXL.md`.  In short: NTB/DM are minimal model-defined
 scope; the vPPB has a broad but not complete PCIe extended-capability
 surface; no vendor-specific slot power timing or GIM internal GFD mapping;
-no CXL.cache TEE; no PHY-level behavior; no physical media poison path; no
+CXL.cache TEE is a functional trust boundary with owner crypto/key policy;
+no PHY-level behavior; no physical media poison path; no
 claim of kernel timing.
 
 **No downstream-port (`swdn`) or endpoint RTL is included.**  The only RTL in

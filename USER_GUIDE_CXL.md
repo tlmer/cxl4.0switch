@@ -130,7 +130,7 @@ platform/testbench; customer `swdn`/EP RTL is not part of the model.
 | Host DDR | `cxl_axi_master` | Optional 128-bit AXI4 master, external-SRAM backend |
 | Linux proxy | `cxl_commands`, `cxl_linux` | P0/P1 commands, events, full sequence, console |
 | PBR | `cxl_pbr`, `cxl_pbr_cci`, `cxl_cascade` | PTH/FAST/LDST, Direct P2P, two-level cascade, switch CCI |
-| P1 cache/EMD | `cxl_cache`, `cxl_emd_bi` | Type-2 MESI cache + owner replacement hooks, EMD/BISnp/BIRsp/HDM-DB |
+| P1 cache/EMD | `cxl_cache`, `cxl_emd_bi` | Type-2 MESI cache + owner replacement hooks + TEE trust boundary, EMD/BISnp/BIRsp/HDM-DB |
 | P2 fabric | `cxl_fabric`, `cxl_mld` | Multi-level PBR/ISL/G-FAM, MLD/FMLD/vCS |
 | Management | `cxl_dcd`, `cxl_dcd_media`, `cxl_gam`, `cxl_gae` | DCD extents + reference media, GAM Buffer/GFD payloads + GAE endpoint |
 | P3/P4 | `cxl_uio`, `cxl_fabric`, `cxl_mld`, `cxl_cache` | UIO/GMV/VTV/GIM, RGT modes, vPPB power, CQID OOO, directory limits |
@@ -236,7 +236,7 @@ Batch: `--dts <path>`, `--run-all`, `--cover`, `--tc <id|all> [n]`,
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**127 gates**, with R7-R19 directed PASS but no full 127-gate rerun.
+**128 gates**, with R7-R20 directed PASS but no full 128-gate rerun.
 43-bench capability suite PASS; delivery library
 **53 objects / 88 CXL public headers**.  A local integration of four `swdn`
 RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  The
@@ -267,10 +267,14 @@ Not covered / explicit boundaries:
   selector mapping is implementation-defined.
 - Vendor-specific advanced-congestion metric (the congestion input and
   secondary penalty are model-level approximations).
-- CXL.cache TEE and long multi-host soak tests.  Device/directory replacement
-  hooks are provided for owner/vendor policies; the model ships LRU plus a
-  20k-operation functional coherence soak, not vendor algorithms or a
-  long-duration soak.
+- CXL.cache TEE is a model-level trust boundary: owner-selected secure
+  64-byte ranges, TEE/non-TEE access isolation, per-line TEE tags, and owner
+  `protect`/`integrity` hooks at the home-memory boundary.  The model ships
+  no production cipher or key policy; the actual secure media and policy are
+  owner-side.  Long-duration multi-host soak tests are not shipped.
+- Device/directory replacement hooks are provided for owner/vendor policies;
+  the model ships LRU plus a 20k-operation functional coherence soak, not
+  vendor algorithms.
 - Dynamic Capacity (DCD) is opt-in and off by default; multi-host/tag
   sharing is implemented (1..8 hosts).  A reference media backend provides
   sparse extents, read/write/zero/sanitize, bad-block injection and scan

@@ -5,7 +5,7 @@ This file is the customer-facing boundary statement.  A `SKIP` or
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**127 gates**, with R7-R19 directed PASS but no full 127-gate rerun;
+**128 gates**, with R7-R20 directed PASS but no full 128-gate rerun;
 43-bench capability suite PASS; delivery library
 **53 objects / 88 CXL public headers**; the `tlmer/cxl4.0switch` archive
 was verified by an independent staged smoke/console.
@@ -64,10 +64,13 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
    not reverse-engineered.
 7. **CXL.cache TEE** and long multi-host soak/stress.  The functional MESI
    model covers I/S/E/M, snoop, eviction, multi-device directory, CQID OOO
-   and LRU.  Device-level and directory-level replacement hooks are provided
-   for owner/vendor policies (the model ships LRU and a 20k-operation
-   functional coherence soak; vendor algorithms and long-duration soak are
-   not shipped).
+   and LRU.  A model-level TEE trust boundary is implemented (secure 64-byte
+   ranges, TEE/non-TEE access isolation, per-line TEE tags, and owner
+   protect/integrity hooks at the home-memory boundary); the model ships no
+   production cipher or key policy, and vendor algorithms plus
+   long-duration multi-host soak are not shipped.  Device-level and
+   directory-level replacement hooks are provided for owner/vendor policies
+   (the model ships LRU and a 20k-operation functional coherence soak).
 8. **CXL.io PTH/PBR.**  The customer RTL lacks the relevant CXL.io PBR fields;
    the model's CXL.io PTH behavior is a model-level interpretation and the RTL
    profile skips it.
@@ -155,7 +158,7 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 - Red variants must fail with the documented signature (see `evidence/`).
 - The last complete model-side tree run (2026-11-10) is **115/115 gates
   PASS** plus the 43-bench capability suite.  The current tree has **127
-  gates**; R7-R19 were run directly and pass, but a full 127-gate rerun was
+  gates**; R7-R20 were run directly and pass, but a full 128-gate rerun was
   not performed.  The released archive was verified by an independent
   staged smoke/console.
 - DUT co-simulation and RTL-profile items remain `PENDING`/`SKIP` until the
