@@ -16,7 +16,7 @@ RTL.
 - Complete PCIe configuration base (Type0/Type1, BAR sizing/MSE, standard and
   extended capability chains) and endpoint/cascaded-switch enumeration
   (model-side; the endpoint/cascade HDM path is verified through the model)
-- CXL.cache Type-2 MESI, multi-device directory, CQID out-of-order, LRU limits
+- CXL.cache Type-2 MESI, multi-device directory, CQID out-of-order, LRU limits and owner replacement hooks
 - PBR: PTH, SPID/DPID, FAST/LDST/IDT, Direct P2P, multi-level fabric/ISL/G-FAM
 - PBR switch CCI, RGT 256 / Table 7-87 mix and advanced congestion avoidance
 - MLD/FMLD/vCS, vPPB Type-1 configuration, hot-plug/power sequencing
@@ -26,6 +26,8 @@ RTL.
   events, poison, regions, memory tasks, PM
 - Validation interfaces: DTS, testcase channel, ioctl ABI, `MODEL_TRACE`,
   coverage report, performance windows, console utilities
+- DCD capacity/extent model with a reference sparse media backend (read/write/sanitize/scan)
+- GAM Buffer, GFD enhanced-event payloads and a GAE endpoint composition
 - Configurable ports `N = 1..32`; NTB/DM minimal model-defined scope (F1a/F1b)
 - The only RTL in this repository is the port adapter/tie-off/DPI stub.
   PHY/link training/DLL retry belong to the downstream CTL RTL.

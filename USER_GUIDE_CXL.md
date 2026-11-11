@@ -130,8 +130,9 @@ platform/testbench; customer `swdn`/EP RTL is not part of the model.
 | Host DDR | `cxl_axi_master` | Optional 128-bit AXI4 master, external-SRAM backend |
 | Linux proxy | `cxl_commands`, `cxl_linux` | P0/P1 commands, events, full sequence, console |
 | PBR | `cxl_pbr`, `cxl_pbr_cci`, `cxl_cascade` | PTH/FAST/LDST, Direct P2P, two-level cascade, switch CCI |
-| P1 cache/EMD | `cxl_cache`, `cxl_emd_bi` | Type-2 MESI cache, EMD/BISnp/BIRsp/HDM-DB |
+| P1 cache/EMD | `cxl_cache`, `cxl_emd_bi` | Type-2 MESI cache + owner replacement hooks, EMD/BISnp/BIRsp/HDM-DB |
 | P2 fabric | `cxl_fabric`, `cxl_mld` | Multi-level PBR/ISL/G-FAM, MLD/FMLD/vCS |
+| Management | `cxl_dcd`, `cxl_dcd_media`, `cxl_gam`, `cxl_gae` | DCD extents + reference media, GAM Buffer/GFD payloads + GAE endpoint |
 | P3/P4 | `cxl_uio`, `cxl_fabric`, `cxl_mld`, `cxl_cache` | UIO/GMV/VTV/GIM, RGT modes, vPPB power, CQID OOO, directory limits |
 | Validation | `cxl_tc`, `cxl_ioctl`, `cxl_trace`, `cxl_perf` | Testcase channel, ioctl ABI, MODEL_TRACE, performance windows |
 | DTS | `cxl_dts` | Runtime template: ports, HDM/BAR bases, mailbox payload, flit mode |
