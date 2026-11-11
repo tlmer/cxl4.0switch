@@ -236,7 +236,7 @@ Batch: `--dts <path>`, `--run-all`, `--cover`, `--tc <id|all> [n]`,
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**126 gates**, with R7-R18 directed PASS but no full 126-gate rerun.
+**127 gates**, with R7-R19 directed PASS but no full 127-gate rerun.
 43-bench capability suite PASS; delivery library
 **53 objects / 88 CXL public headers**.  A local integration of four `swdn`
 RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  The
@@ -274,8 +274,10 @@ Not covered / explicit boundaries:
 - Dynamic Capacity (DCD) is opt-in and off by default; multi-host/tag
   sharing is implemented (1..8 hosts).  A reference media backend provides
   sparse extents, read/write/zero/sanitize, bad-block injection and scan
-  primitives; physical media and Type3 Scan Media result population remain
-  owner-side.
+  primitives.  Type3 Scan Media (0x4304/0x4305) consumes the owner
+  `media_scan_range` hook (merged with the poison fallback) and Media
+  Operation (0x4402) zero/sanitize reaches the owner media hooks; the actual
+  physical media and platform replacement policy remain owner-side.
 - Security Send/Receive implements the CXL transport envelope (SECP/SPSP/
   reserved bytes/protocol data) with a protocol-handler registry and matching
   response queue; TCG/SED payload formats remain owner-supplied, and the

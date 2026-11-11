@@ -5,7 +5,7 @@ This file is the customer-facing boundary statement.  A `SKIP` or
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**126 gates**, with R7-R18 directed PASS but no full 126-gate rerun;
+**127 gates**, with R7-R19 directed PASS but no full 127-gate rerun;
 43-bench capability suite PASS; delivery library
 **53 objects / 88 CXL public headers**; the `tlmer/cxl4.0switch` archive
 was verified by an independent staged smoke/console.
@@ -104,9 +104,12 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     Dynamic Capacity Event Log and Identify offset 0x43.  Multi-host/tag
     sharing is implemented (1..8 hosts, shared-tag accounting).  A reference
     media backend (`CxlDcdReferenceMedia`) provides sparse 64-byte extents,
-    read/write/zero/sanitize, bad-block injection and scan primitives; it is
-    not a physical media implementation, and Type3 Scan Media result
-    population plus platform media replacement remain owner-side.
+    read/write/zero/sanitize, bad-block injection and scan primitives.  Type3
+    Scan Media (0x4304/0x4305) consumes an owner `media_scan_range` hook,
+    merges it with the poison fallback, and Media Operation (0x4402)
+    zero/sanitize reaches the owner `media_zero_range`/`media_sanitize_range`
+    hooks.  It is not a physical media implementation; the actual media and
+    platform replacement policy remain owner-side.
 17. **Security Send/Receive, IDE and DOE.**  Security Send/Receive implements
     the CXL transport envelope (SECP, SPSP, reserved bytes, protocol data) with
     a protocol-handler registry and a matching response queue; it is disabled
@@ -151,8 +154,8 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 - `TB_*: ALL PASS (n/n)` means every listed criterion passed.
 - Red variants must fail with the documented signature (see `evidence/`).
 - The last complete model-side tree run (2026-11-10) is **115/115 gates
-  PASS** plus the 43-bench capability suite.  The current tree has **122
-  gates**; R7-R18 were run directly and pass, but a full 126-gate rerun was
+  PASS** plus the 43-bench capability suite.  The current tree has **127
+  gates**; R7-R19 were run directly and pass, but a full 127-gate rerun was
   not performed.  The released archive was verified by an independent
   staged smoke/console.
 - DUT co-simulation and RTL-profile items remain `PENDING`/`SKIP` until the

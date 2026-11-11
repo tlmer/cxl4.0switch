@@ -296,6 +296,16 @@ struct CxlType3Commands {
     std::function<void(std::uint64_t dpa, std::uint64_t len)> media_zero_range;
     std::uint64_t media_sanitize_ranges = 0, media_zero_ranges = 0;
 
+    // Optional owner media-scan backend for Scan Media (0x4304).  When
+    // installed, the returned records are merged with the poison-list
+    // fallback.  A record must be 64-byte aligned and lie inside the scanned
+    // range; invalid records are dropped and counted in media_scan_invalid.
+    // A record that extends past the range end is clamped.  Returning false
+    // leaves the poison-list fallback as the only source.
+    std::function<bool(std::uint64_t dpa, std::uint64_t len,
+                       std::vector<CxlScanMediaRecord>* out)> media_scan_range;
+    std::uint64_t media_scan_ranges = 0, media_scan_invalid = 0;
+
     // Optional Dynamic Capacity Device profile (0x4800-0x4803).  Disabled by
     // default; the platform enables it when the device advertises DCD.
     bool dcd_supported = false;

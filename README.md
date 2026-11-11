@@ -26,7 +26,7 @@ RTL.
   events, poison, regions, memory tasks, PM
 - Validation interfaces: DTS, testcase channel, ioctl ABI, `MODEL_TRACE`,
   coverage report, performance windows, console utilities
-- DCD capacity/extent model with a reference sparse media backend (read/write/sanitize/scan)
+- DCD capacity/extent model with a reference sparse media backend (read/write/sanitize/scan), wired to Type3 Scan Media and Media Operation
 - GAM Buffer, GFD enhanced-event payloads and a GAE endpoint composition
 - Configurable ports `N = 1..32`; NTB/DM minimal model-defined scope (F1a/F1b)
 - The only RTL in this repository is the port adapter/tie-off/DPI stub.
@@ -168,8 +168,8 @@ The model-side feature set was verified by a **115-gate model-side
 regression (0 FAIL)** that includes a 43-bench capability suite, plus DTS,
 testcase/ioctl/trace/coverage/perf, DUT-docking vectors, port compatibility
 check, independent library smoke, and console runs.  The current tree has
-126 gates; the added R7-R18 feature gates were run directly and pass, while
-a complete 126-gate rerun has not been performed, so 126/126 is not claimed.  A local integration of
+127 gates; the added R7-R19 feature gates were run directly and pass, while
+a complete 127-gate rerun has not been performed, so 127/127 is not claimed.  A local integration of
 four `swdn` RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  See
 `evidence/VALIDATION.md` for counts and artifacts.  Customer `swdn` + EP DUT
 RTL co-simulation and the RTL PBR/256B profile remain pending the customer
