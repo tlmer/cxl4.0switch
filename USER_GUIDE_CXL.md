@@ -133,6 +133,7 @@ platform/testbench; customer `swdn`/EP RTL is not part of the model.
 | P1 cache/EMD | `cxl_cache`, `cxl_emd_bi` | Type-2 MESI cache + owner replacement hooks + TEE trust boundary, EMD/BISnp/BIRsp/HDM-DB |
 | P2 fabric | `cxl_fabric`, `cxl_mld` | Multi-level PBR/ISL/G-FAM, MLD/FMLD/vCS |
 | Management | `cxl_dcd`, `cxl_dcd_media`, `cxl_gam`, `cxl_gae` | DCD extents + reference media, GAM Buffer/GFD payloads + GAE endpoint |
+| Security | `cxl_security_mailbox`, `cxl_tcg_sed` | Security Send/Receive envelope + reference TCG/SED handler (framing, Discovery, SED state) |
 | P3/P4 | `cxl_uio`, `cxl_fabric`, `cxl_mld`, `cxl_cache` | UIO/GMV/VTV/GIM, RGT modes, vPPB power, CQID OOO, directory limits |
 | Validation | `cxl_tc`, `cxl_ioctl`, `cxl_trace`, `cxl_perf` | Testcase channel, ioctl ABI, MODEL_TRACE, performance windows |
 | DTS | `cxl_dts` | Runtime template: ports, HDM/BAR bases, mailbox payload, flit mode |

@@ -62,15 +62,15 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 6. **Vendor advanced-congestion algorithm.**  The congestion metric is an input
    and `secondary_penalty` is a model approximation; the vendor algorithm is
    not reverse-engineered.
-7. **CXL.cache TEE** and long multi-host soak/stress.  The functional MESI
-   model covers I/S/E/M, snoop, eviction, multi-device directory, CQID OOO
-   and LRU.  A model-level TEE trust boundary is implemented (secure 64-byte
-   ranges, TEE/non-TEE access isolation, per-line TEE tags, and owner
+7. **CXL.cache long multi-host soak/stress.**  The functional MESI model
+   covers I/S/E/M, snoop, eviction, multi-device directory, CQID OOO and LRU.
+   A model-level TEE trust boundary is implemented (secure 64-byte ranges,
+   TEE/non-TEE access isolation, per-line TEE tags, and owner
    protect/integrity hooks at the home-memory boundary); the model ships no
-   production cipher or key policy, and vendor algorithms plus
-   long-duration multi-host soak are not shipped.  Device-level and
-   directory-level replacement hooks are provided for owner/vendor policies
-   (the model ships LRU and a 20k-operation functional coherence soak).
+   production cipher or key policy, and vendor algorithms plus long-duration
+   multi-host soak are not shipped.  Device-level and directory-level
+   replacement hooks are provided for owner/vendor policies (the model ships
+   LRU and a 20k-operation functional coherence soak).
 8. **CXL.io PTH/PBR.**  The customer RTL lacks the relevant CXL.io PBR fields;
    the model's CXL.io PTH behavior is a model-level interpretation and the RTL
    profile skips it.
