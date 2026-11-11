@@ -4,16 +4,16 @@ Model-side verification completed 2026-11-10 on Linux x86_64 with g++ 8.5.
 **2026-11-10 update**: the last complete model-tree regression passed
 (**115/115 gates, 0 FAIL, `G1_RC=0`**) together with the 43-bench
 capability gap suite; the SystemC gates run inside the same tree.  The
-current tree has **125 gates**: R7-R17 add or extend feature gates and each
-new/changed gate was run directly and passes, but a complete 125-gate
-regression has not been rerun, so 125/125 is **not** claimed.  See the
+current tree has **126 gates**: R7-R18 add or extend feature gates and each
+new/changed gate was run directly and passes, but a complete 126-gate
+regression has not been rerun, so 126/126 is **not** claimed.  See the
 "N8 SystemC snapshot" section below.
 
 | Gate | Result |
 |---|---|
 | Feature testbenches | 43-bench capability gap suite (`MODEL_GAP_TESTS: PASS`) inside the 115-gate tree; each bench also has red/negative checks |
 | Parent PCIe baseline | `pcie6sw` 28/28 PASS, EXIT=0 |
-| CXL full regression | Last complete run: `cxl6sw` **115/115 gates PASS / 0 FAIL / `G1_RC=0`** (2026-11-10); current 125-gate tree has directed PASS for the added R7-R17 gates, full rerun not performed |
+| CXL full regression | Last complete run: `cxl6sw` **115/115 gates PASS / 0 FAIL / `G1_RC=0`** (2026-11-10); current 126-gate tree has directed PASS for the added R7-R18 gates, full rerun not performed |
 | PCIe base + EP/cascaded enumeration | `TB-CXL-ENUM: ALL PASS (44/44)`; E6 Type0 EP, E7 Type1 cascade, E8 cascade HDM/data |
 | Post-E8 delta | ENUM 44/44; SWITCH 13/13; HDM-SEQ 8/8; CASCADE 10/10; PBR 12/12; MEM 14/14; LINUX 21/21 |
 | DTS template + runtime application | `TB_CXL_DTS: ALL PASS (11/11)` |
@@ -23,10 +23,11 @@ regression has not been rerun, so 125/125 is **not** claimed.  See the
 | Force manifest | 94 force statements classified; per-DUT subsets generated |
 | Console | `--run-all` PASS; `--tc all` PASS (18 cases) |
 | Independent library smoke | `SMOKE_CXL: ALL PASS` using `include/` + `lib/` only |
-| Delivery library | 53 objects / 87 CXL public headers (plus `pcie_ext_caps.h`); English, path-leak and vendor-name gates clean |
+| Delivery library | 53 objects / 88 CXL public headers (plus `pcie_ext_caps.h`); English, path-leak and vendor-name gates clean |
 | CXL.cache replacement hooks + soak | `TB_CXL_CACHE_POLICY: ALL PASS (15/15)`; 20k mixed device/host coherence soak; default LRU (`CACHE_LRU 22/22`, `CACHE_OOO 13/13`) unchanged |
 | GAE GAM Buffer endpoint | `TB_CXL_GAE: ALL PASS (16/16)`; `TB_CXL_GAM_GFD: ALL PASS (30/30)` after bits[51:5] address-mask fix |
 | Configurable VPD content | `TB_CXL_VPD: ALL PASS (21/21)` (identifier + VPD-R fields through the standard window) |
+| DCD reference media backend | `TB_CXL_DCD_MEDIA: ALL PASS (17/17)` (sparse extents, read/write/zero/sanitize, bad blocks and scan) |
 
 MODEL_TRACE classes observed in a full run: STAGE, IRQ, EXC, ERR, RESULT, SUM.
 
@@ -58,7 +59,7 @@ SystemC-free archive.
 
 ## Delivery update (2026-11-10)
 
-The delivered library is plain C++: **53 objects / 87 CXL public headers**
+The delivered library is plain C++: **53 objects / 88 CXL public headers**
 (plus `pcie_ext_caps.h`); English, path-leak and vendor-name gates clean.  An independent staged smoke/console against the delivered library
 reports **`SMOKE_CXL: ALL PASS`** (proxy + perf + 18 testcases) and console
 **18/18**.  The archive is SystemC-free; optional SystemC/DPI co-simulation
@@ -85,8 +86,9 @@ integration is delivered separately.
   replacement hooks are provided for owner/vendor policies (the model ships
   LRU and a 20k-operation functional soak, not vendor algorithms or a
   long-duration soak); remaining PCIe extended-capability registers in the
-  vPPB read 0; DCD is opt-in (media/scan are owner hooks, with 1..8-host/tag
-  sharing implemented); Security Send/Receive implements the CXL transport
+  vPPB read 0; DCD is opt-in (a reference media backend provides sparse extents,
+  read/write/sanitize and scan; physical media and Type3 Scan Media result
+  population are owner-side, with 1..8-host/tag sharing implemented); Security Send/Receive implements the CXL transport
   envelope and handler registry, while TCG/SED payload formats remain
   owner-supplied; IDE key/stream/IV and AES-256-GCM are modeled with an owner
   cipher hook (real RTL link framing/TSP is customer-owned); DOE has

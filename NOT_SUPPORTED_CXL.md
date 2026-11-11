@@ -5,9 +5,9 @@ This file is the customer-facing boundary statement.  A `SKIP` or
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**125 gates**, with R7-R17 directed PASS but no full 125-gate rerun;
+**126 gates**, with R7-R18 directed PASS but no full 126-gate rerun;
 43-bench capability suite PASS; delivery library
-**53 objects / 87 CXL public headers**; the `tlmer/cxl4.0switch` archive
+**53 objects / 88 CXL public headers**; the `tlmer/cxl4.0switch` archive
 was verified by an independent staged smoke/console.
 A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 (14/14); the customer-environment co-simulation (item 13) remains SKIP.
@@ -102,9 +102,11 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
     default (0x4800-0x4803 return `Unsupported`).  When enabled, the model
     covers configuration, extent list, add/release responses, the class-4
     Dynamic Capacity Event Log and Identify offset 0x43.  Multi-host/tag
-    sharing is implemented (1..8 hosts, shared-tag accounting).  The model does
-    not own a media array or perform scans (owner hooks connect a device
-    backend).
+    sharing is implemented (1..8 hosts, shared-tag accounting).  A reference
+    media backend (`CxlDcdReferenceMedia`) provides sparse 64-byte extents,
+    read/write/zero/sanitize, bad-block injection and scan primitives; it is
+    not a physical media implementation, and Type3 Scan Media result
+    population plus platform media replacement remain owner-side.
 17. **Security Send/Receive, IDE and DOE.**  Security Send/Receive implements
     the CXL transport envelope (SECP, SPSP, reserved bytes, protocol data) with
     a protocol-handler registry and a matching response queue; it is disabled
@@ -150,7 +152,7 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 - Red variants must fail with the documented signature (see `evidence/`).
 - The last complete model-side tree run (2026-11-10) is **115/115 gates
   PASS** plus the 43-bench capability suite.  The current tree has **122
-  gates**; R7-R17 were run directly and pass, but a full 125-gate rerun was
+  gates**; R7-R18 were run directly and pass, but a full 126-gate rerun was
   not performed.  The released archive was verified by an independent
   staged smoke/console.
 - DUT co-simulation and RTL-profile items remain `PENDING`/`SKIP` until the
