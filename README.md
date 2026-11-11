@@ -26,6 +26,7 @@ RTL.
   events, poison, regions, memory tasks, PM
 - Validation interfaces: DTS, testcase channel, ioctl ABI, `MODEL_TRACE`,
   coverage report, performance windows, console utilities
+- Security Send/Receive envelope with a reference TCG/SED handler (TCG framing, Level 0 Discovery, lock/passphrase/revert state); IDE AES-256-GCM and DOE/SPDM models
 - DCD capacity/extent model with a reference sparse media backend (read/write/sanitize/scan), wired to Type3 Scan Media and Media Operation
 - GAM Buffer, GFD enhanced-event payloads and a GAE endpoint composition
 - Configurable ports `N = 1..32`; NTB/DM minimal model-defined scope (F1a/F1b)
