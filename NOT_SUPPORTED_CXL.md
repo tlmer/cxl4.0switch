@@ -157,7 +157,7 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 - `TB_*: ALL PASS (n/n)` means every listed criterion passed.
 - Red variants must fail with the documented signature (see `evidence/`).
 - The last complete model-side tree run (2026-11-10) is **115/115 gates
-  PASS** plus the 43-bench capability suite.  The current tree has **127
+  PASS** plus the 43-bench capability suite.  The current tree has **128
   gates**; R7-R20 were run directly and pass, but a full 128-gate rerun was
   not performed.  The released archive was verified by an independent
   staged smoke/console.
