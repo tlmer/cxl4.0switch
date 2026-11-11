@@ -168,8 +168,8 @@ The model-side feature set was verified by a **115-gate model-side
 regression (0 FAIL)** that includes a 43-bench capability suite, plus DTS,
 testcase/ioctl/trace/coverage/perf, DUT-docking vectors, port compatibility
 check, independent library smoke, and console runs.  The current tree has
-128 gates; the added R7-R20 feature gates were run directly and pass, while
-a complete 128-gate rerun has not been performed, so 128/128 is not claimed.  A local integration of
+129 gates; the added R7-R21 feature gates were run directly and pass, while
+a complete 129-gate rerun has not been performed, so 129/129 is not claimed.  A local integration of
 four `swdn` RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  See
 `evidence/VALIDATION.md` for counts and artifacts.  Customer `swdn` + EP DUT
 RTL co-simulation and the RTL PBR/256B profile remain pending the customer

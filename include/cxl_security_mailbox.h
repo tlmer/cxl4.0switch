@@ -11,11 +11,14 @@
 //     - disabled by default; 0x4600/0x4601 remain Unsupported;
 //     - when enabled, only SECP values with a registered handler are accepted;
 //     - a successful Security Send queues its response for the matching
-//       Security Receive (SECP+SPSP), so TCG/SED packet formats stay outside
-//       this class.
+//       Security Receive (SECP+SPSP);
+//     - an optional receive-only handler serves protocol-defined unsolicited
+//       responses when no Send response is pending (for example TCG Level 0
+//       Discovery).  `cxl_tcg_sed.h` supplies a reference TCG/SED handler.
 //
-//   This is intentionally an envelope/registry, not a TCG/SED conformance
-//   implementation.  Unknown protocols are never silently accepted.
+//   This is intentionally an envelope/registry, not a full TCG/SED
+//   conformance implementation.  Unknown protocols are never silently
+//   accepted.
 // -----------------------------------------------------------------------------
 #pragma once
 
@@ -42,6 +45,10 @@ struct CxlSecurityMailbox {
 
     bool enabled = false;
     std::map<std::uint8_t, Handler> handlers;
+    // Optional receive-side handler for protocol-defined unsolicited
+    // responses (for example TCG Level 0 Discovery).  It is consulted only
+    // when no Send response is pending for the same SECP+SPSP.
+    std::map<std::uint8_t, Handler> receive_handlers;
     std::map<std::uint32_t, std::deque<std::vector<std::uint8_t>>> pending;
     std::uint64_t sends = 0, receives = 0, rejected = 0;
     std::uint64_t unsupported_protocol = 0, malformed = 0, empty_receive = 0;
@@ -49,6 +56,12 @@ struct CxlSecurityMailbox {
     bool register_protocol(std::uint8_t secp, Handler h) {
         if (!h) return false;
         handlers[secp] = std::move(h);
+        return true;
+    }
+
+    bool register_receive_protocol(std::uint8_t secp, Handler h) {
+        if (!h) return false;
+        receive_handlers[secp] = std::move(h);
         return true;
     }
 
@@ -132,6 +145,21 @@ struct CxlSecurityMailbox {
             ((std::uint32_t)secp << 16) | (std::uint32_t)spsp;
         auto it = pending.find(key);
         if (it == pending.end() || it->second.empty()) {
+            auto rh = receive_handlers.find(secp);
+            if (rh != receive_handlers.end()) {
+                std::vector<std::uint8_t> data(in.begin() + kHeaderBytes,
+                                               in.end());
+                std::vector<std::uint8_t> response;
+                *rc = MBX_RC_SUCCESS;
+                if (rh->second(secp, spsp, data, &response, rc)) {
+                    *out = std::move(response);
+                    *rc = MBX_RC_SUCCESS;
+                    return true;
+                }
+                if (*rc == MBX_RC_SUCCESS) *rc = MBX_RC_UNSUPPORTED;
+                ++rejected;
+                return false;
+            }
             ++empty_receive;
             ++rejected;
             *rc = MBX_RC_INVALID_INPUT;

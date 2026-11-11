@@ -5,9 +5,9 @@ This file is the customer-facing boundary statement.  A `SKIP` or
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**128 gates**, with R7-R20 directed PASS but no full 128-gate rerun;
+**129 gates**, with R7-R21 directed PASS but no full 129-gate rerun;
 43-bench capability suite PASS; delivery library
-**53 objects / 88 CXL public headers**; the `tlmer/cxl4.0switch` archive
+**53 objects / 89 CXL public headers**; the `tlmer/cxl4.0switch` archive
 was verified by an independent staged smoke/console.
 A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 (14/14); the customer-environment co-simulation (item 13) remains SKIP.
@@ -116,9 +116,11 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 17. **Security Send/Receive, IDE and DOE.**  Security Send/Receive implements
     the CXL transport envelope (SECP, SPSP, reserved bytes, protocol data) with
     a protocol-handler registry and a matching response queue; it is disabled
-    by default (`Unsupported`).  The TCG/SED payload formats remain
-    owner-supplied handlers (a raw `security_passthrough` hook is also
-    retained).  IDE is modeled at the key/stream/IV and AES-256-GCM level (IDE_KM and
+    by default (`Unsupported`).  `cxl_tcg_sed.h` supplies a reference TCG/SED
+    handler (TCG framing, Level 0 Discovery, reference SED lock/passphrase/
+    revert state machine); full Opal method-UID dispatch, production SSC
+    semantics and key management remain owner-side (a raw
+    `security_passthrough` hook is also retained).  IDE is modeled at the key/stream/IV and AES-256-GCM level (IDE_KM and
     IDE crypto benches pass) with an owner cipher hook; real RTL link-layer
     IDE framing and TSP integration are owned by the customer link-layer IP.
     DOE supports Discovery, CDAT table access, CMA / Secured CMA via an
@@ -157,8 +159,8 @@ A local integration of four `swdn` RTL cores + four RTL EPs passes M1-M5
 - `TB_*: ALL PASS (n/n)` means every listed criterion passed.
 - Red variants must fail with the documented signature (see `evidence/`).
 - The last complete model-side tree run (2026-11-10) is **115/115 gates
-  PASS** plus the 43-bench capability suite.  The current tree has **128
-  gates**; R7-R20 were run directly and pass, but a full 128-gate rerun was
+  PASS** plus the 43-bench capability suite.  The current tree has **129
+  gates**; R7-R21 were run directly and pass, but a full 129-gate rerun was
   not performed.  The released archive was verified by an independent
   staged smoke/console.
 - DUT co-simulation and RTL-profile items remain `PENDING`/`SKIP` until the

@@ -236,9 +236,9 @@ Batch: `--dts <path>`, `--run-all`, `--cover`, `--tc <id|all> [n]`,
 
 **Current model-side baseline (2026-11-11)**: the last complete tree
 regression is **115/115 gates PASS, 0 FAIL**; the current tree has
-**128 gates**, with R7-R20 directed PASS but no full 128-gate rerun.
+**129 gates**, with R7-R21 directed PASS but no full 129-gate rerun.
 43-bench capability suite PASS; delivery library
-**53 objects / 88 CXL public headers**.  A local integration of four `swdn`
+**53 objects / 89 CXL public headers**.  A local integration of four `swdn`
 RTL cores + four RTL EPs passes MC/BC/MemRd M1-M5 (14/14).  The
 customer-environment co-simulation remains SKIP.
 
@@ -284,8 +284,10 @@ Not covered / explicit boundaries:
   physical media and platform replacement policy remain owner-side.
 - Security Send/Receive implements the CXL transport envelope (SECP/SPSP/
   reserved bytes/protocol data) with a protocol-handler registry and matching
-  response queue; TCG/SED payload formats remain owner-supplied, and the
-  feature is off by default.  IDE key/stream/IV management and AES-256-GCM
+  response queue; `cxl_tcg_sed.h` supplies a reference TCG/SED handler
+  (framing, Level 0 Discovery, reference lock/passphrase/revert state), while
+  full Opal/SSC semantics remain owner-side, and the feature is off by
+  default.  IDE key/stream/IV management and AES-256-GCM
   are modeled (IDE_KM and IDE crypto benches pass); real RTL link-layer IDE
   framing/TSP is owned by the customer link-layer IP.  DOE supports
   Discovery, CDAT, CMA/Secured CMA and an optional IDE_KM object;
