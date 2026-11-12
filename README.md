@@ -17,8 +17,9 @@ RTL.
   extended capability chains) and endpoint/cascaded-switch enumeration
   (model-side; the endpoint/cascade HDM path is verified through the model)
 - Type-1 prefetchable memory windows (0x24/0x28/0x2C, 32/64-bit forms) and
-  CXL.io P2P routing through them; remote enumeration assigns DSP bridge
-  windows from the actual endpoint BARs
+  CXL.io P2P routing through them; local and remote enumeration assign DSP/USP
+  bridge windows from the actual endpoint BARs, including the parent DSP of a
+  cascaded switch; P2P into a cascade resolves the child port and backend
 - CXL.cache Type-2 MESI, multi-device directory, CQID out-of-order, LRU limits, owner replacement hooks, and a TEE trust boundary (secure ranges, line tags, owner protect/integrity hooks)
 - PBR: PTH, SPID/DPID, FAST/LDST/IDT, Direct P2P, multi-level fabric/ISL/G-FAM
 - PBR switch CCI, RGT 256 / Table 7-87 mix and advanced congestion avoidance
