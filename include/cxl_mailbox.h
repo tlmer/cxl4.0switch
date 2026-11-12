@@ -50,6 +50,7 @@ enum CxlMbxRc : std::uint16_t {
     MBX_RC_INTERRUPTED      = 0x0018,
     MBX_RC_RESOURCES_EXHAUSTED = 0x001D,
     MBX_RC_INVALID_EXTENT_LIST = 0x001E,
+    MBX_RC_TRANSFER_OUT_OF_ORDER = 0x001F,
 };
 
 // Command whitelist (P0 + P1 + PBR switch CCI).

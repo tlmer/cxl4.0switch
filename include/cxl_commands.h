@@ -317,10 +317,20 @@ struct CxlType3Commands {
     // test execution results are supplied by the owner through media_test.
     bool media_test_logs_enabled = false;
     CxlMediaTestState media_test;
+    // Chunked Media Test parameter transfer (Table 8-288 Actions 1..4).
+    // The model assembles the parameter stream in order and only then starts
+    // the owner-supplied media test; execution remains owner/device-side.
+    std::vector<std::uint8_t> media_test_transfer;
+    bool media_test_transfer_active = false;
+    std::uint32_t media_test_transfer_next = 0;  // next byte offset
     void enable_media_test_logs();
     void refresh_media_test_log_sizes();
-    // Parse the Table 8-288/8-289 full-transfer Media Test payload.  Only
-    // Action=Full Transfer is modeled; chunked transfer is Unsupported.
+    // Parse the Table 8-288/8-289 Media Test parameter payload (the bytes
+    // after the 8-byte Perform Maintenance header).
+    bool start_media_test_params(const std::vector<std::uint8_t>& params,
+                                 std::uint16_t* rc);
+    // Perform Maintenance dispatcher: Full Transfer and Initiate/Continue/
+    // End/Abort chunked transfer.
     bool start_media_test(const std::vector<std::uint8_t>& in,
                           std::uint16_t* rc);
 

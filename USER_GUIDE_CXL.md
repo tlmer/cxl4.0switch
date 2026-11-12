@@ -293,6 +293,11 @@ Not covered / explicit boundaries:
   framing/TSP is owned by the customer link-layer IP.  DOE supports
   Discovery, CDAT, CMA/Secured CMA and an optional IDE_KM object;
   unrecognized objects are rejected.
+- Perform Maintenance 0x0600 Media Test supports both Action 00h (Full
+  Transfer) and the chunked Actions 01h-04h (Initiate/Continue/End/Abort).
+  Chunks are assembled in 32-byte offset order; an out-of-order transfer
+  returns Transfer Out of Order (001Fh), the staged transfer is bounded at
+  64 KiB, and test execution remains owner/device-side.
 - Mailbox opcodes outside the implemented whitelist return `Unsupported`
   (for example 0x4900+, 0x5717+).  0x0106 Event Notification is modeled as
   the component-originated MCTP CCI payload/queue.  0x0107/0x0108 are

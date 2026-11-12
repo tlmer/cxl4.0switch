@@ -31,6 +31,7 @@ regression has not been rerun, so 129/129 is **not** claimed.  See the
 | Configurable VPD content | `TB_CXL_VPD: ALL PASS (21/21)` (identifier + VPD-R fields through the standard window) |
 | DCD reference media backend | `TB_CXL_DCD_MEDIA: ALL PASS (17/17)` (sparse extents, read/write/zero/sanitize, bad blocks and scan) |
 | Type3 Scan Media / Media Operation over reference media | `TB_CXL_MEDIA_SCAN: ALL PASS (20/20)` (0x4304/0x4305 backend records, paging, poison fallback, validation; 0x4402 zero/sanitize reaches media) |
+| Perform Maintenance Media Test chunked transfer | `TB_CXL_TYPE3_EXT: ALL PASS (202/202)` (Table 8-288 Action 01h-04h Initiate/Continue/End/Abort; ordered 32-byte offsets, Transfer Out of Order 001Fh, 64 KiB bound, staged-Full Busy; end reuses the full-transfer validation) |
 
 MODEL_TRACE classes observed in a full run: STAGE, IRQ, EXC, ERR, RESULT, SUM.
 
