@@ -28,6 +28,9 @@ RTL.
 - UIO Direct P2P, GMV/VTV/GIM, FAST/GIM interleave
 - Linux proxy: ACPI/CEDT view, discovery, HDM programming, mailbox/CCI,
   events, poison, regions, memory tasks, PM
+- W5 model-host co-simulation: 5-device tree (host bridge/root port/USP/DSP/
+  endpoint), CXL.io read completions with matching data, DUT traffic gated
+  until model enumeration completes
 - Validation interfaces: DTS, testcase channel, ioctl ABI, `MODEL_TRACE`,
   coverage report, performance windows, console utilities
 - Security Send/Receive envelope with a reference TCG/SED handler (TCG framing, Level 0 Discovery, lock/passphrase/revert state); IDE AES-256-GCM and DOE/SPDM models
