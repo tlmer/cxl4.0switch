@@ -353,6 +353,20 @@ struct CxlType3Commands {
                        std::vector<std::uint8_t>* out, std::uint16_t* rc)>
         security_passthrough;
     std::uint64_t security_passthrough_ops = 0;
+
+    // Optional owner hook for opcodes outside the built-in whitelist:
+    // GFD component management (0x4900-0x4914), PBR switch CCI 0x5717+,
+    // vendor commands, etc.  The payload and response format are
+    // owner-defined (the model does not invent spec layouts).  The handler
+    // returns true when it consumed the command and fills out/rc; returning
+    // false falls through to Unsupported.  Built-in opcodes never reach this
+    // hook, and a missing handler never turns into a silent Success.
+    std::function<bool(std::uint16_t opcode,
+                       const std::vector<std::uint8_t>& in,
+                       std::vector<std::uint8_t>* out, std::uint16_t* rc)>
+        vendor_command_handler;
+    std::uint64_t vendor_command_ops = 0;
+    std::uint64_t vendor_command_declined = 0;
     // Optional CXL Security Send/Receive envelope (0x4600/0x4601).  Disabled
     // by default; the protocol semantics (e.g. TCG/SED) are owner handlers.
     CxlSecurityMailbox security_mailbox;

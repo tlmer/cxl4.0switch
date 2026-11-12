@@ -31,6 +31,9 @@ RTL.
 - W5 model-host co-simulation: 5-device tree (host bridge/root port/USP/DSP/
   endpoint), CXL.io read completions with matching data, DUT traffic gated
   until model enumeration completes
+- Mailbox: CXL 4.0 Table 8-215 command set, plus an owner hook for unlisted
+  opcodes (GFD 0x4900-0x4914, PBR switch CCI 0x5717+, vendor commands) with
+  explicit Unsupported when no handler is installed
 - Validation interfaces: DTS, testcase channel, ioctl ABI, `MODEL_TRACE`,
   coverage report, performance windows, console utilities
 - Security Send/Receive envelope with a reference TCG/SED handler (TCG framing, Level 0 Discovery, lock/passphrase/revert state); IDE AES-256-GCM and DOE/SPDM models

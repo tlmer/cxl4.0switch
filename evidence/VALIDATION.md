@@ -14,6 +14,7 @@ regression has not been rerun, so 129/129 is **not** claimed.  See the
 | Feature testbenches | 43-bench capability gap suite (`MODEL_GAP_TESTS: PASS`) inside the 115-gate tree; each bench also has red/negative checks |
 | Parent PCIe baseline | `pcie6sw` 28/28 PASS, EXIT=0 |
 | W5 model-host co-simulation | `[w5-host] PASS: MODEL_HOST_ENUM (5 devices, 0 skips) + DSP/EP addresses + roles`; CXL.io 52 writes / 52 reads with 52 completions, 0 read-data mismatch, 0 response timeout; DUT traffic is gated until model enumeration finishes.  Residual: 2 pre-existing LTSSM equalization messages and the VIP skip-enum spurious-completion classification (documented) |
+| Unlisted mailbox owner hook | `TB_CXL_MBX_VENDOR: ALL PASS (8/8)` (GFD 0x4900, CCI 0x5717, decline, owner error, built-in non-interference, missing-handler red); regressions `MBX_DEV 16/16`, `MBX_P1 19/19`, `TYPE3_EXT 202/202` |
 | CXL full regression | Last complete run: `cxl6sw` **115/115 gates PASS / 0 FAIL / `G1_RC=0`** (2026-11-10); current 129-gate tree has directed PASS for the added R7-R21 gates, full rerun not performed |
 | PCIe base + EP/cascaded enumeration | `TB-CXL-ENUM: ALL PASS (56/56)`; E6 Type0 EP, E7 Type1 cascade, E8 cascade HDM/data, E9 cascaded CXL.io P2P + parent-DSP bridge windows (2026-11-12) |
 | Type-1 prefetchable window + CXL.io P2P | `TB_CXL_PORT: ALL PASS (13/13)`, `TB_CXL_SWITCH: ALL PASS (15/15)`, `TB_CXL_USP: ALL PASS (19/19)` (32/64-bit windows, P2P through a DSP prefetch window, source-loop refusal; 2026-11-12) |
