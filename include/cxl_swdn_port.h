@@ -24,7 +24,9 @@ struct CxlSwdnPort {
     CxlHdm hdm;               // DSP HDM (device target, 1 decoder)
     bool link_up = false;
     std::uint8_t bus = 0, sec = 0, sub = 0;
-    std::uint16_t mem_base_reg = 0, mem_limit_reg = 0;
+    std::uint16_t mem_base_reg = 0, mem_limit_reg = 0;       // 0x20
+    std::uint16_t pref_base_reg = 0, pref_limit_reg = 0;     // 0x24
+    std::uint16_t pref_base_hi = 0, pref_limit_hi = 0;       // 0x28 / 0x2C
     mutable std::uint64_t decode_hits = 0, decode_misses = 0;
 
     void init(int idx, std::uint8_t b = 0, std::uint8_t s = 0);
@@ -38,7 +40,10 @@ struct CxlSwdnPort {
     bool program_hdm(std::uint64_t base, std::uint64_t size, std::string* err = nullptr);
     bool decode(std::uint64_t hpa, std::uint64_t* dpa, std::string* err = nullptr) const;
 
+    // A memory request is decoded to this port if it falls in either the
+    // non-prefetchable or the prefetchable Type-1 bridge window.
     bool in_mem_window(std::uint64_t addr) const;
+    bool in_pref_window(std::uint64_t addr) const;
 };
 
 } // namespace cxl_tlm

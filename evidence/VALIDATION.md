@@ -15,6 +15,8 @@ regression has not been rerun, so 129/129 is **not** claimed.  See the
 | Parent PCIe baseline | `pcie6sw` 28/28 PASS, EXIT=0 |
 | CXL full regression | Last complete run: `cxl6sw` **115/115 gates PASS / 0 FAIL / `G1_RC=0`** (2026-11-10); current 129-gate tree has directed PASS for the added R7-R21 gates, full rerun not performed |
 | PCIe base + EP/cascaded enumeration | `TB-CXL-ENUM: ALL PASS (44/44)`; E6 Type0 EP, E7 Type1 cascade, E8 cascade HDM/data |
+| Type-1 prefetchable window + CXL.io P2P | `TB_CXL_PORT: ALL PASS (13/13)`, `TB_CXL_SWITCH: ALL PASS (15/15)`, `TB_CXL_USP: ALL PASS (19/19)` (32/64-bit windows, P2P through a DSP prefetch window, source-loop refusal; 2026-11-12) |
+| Remote enumeration bridge windows | `TB_CXL_REMOTE_ENUM: ALL PASS (144/144)`; DSP memory/prefetch windows assigned from the actual endpoint BARs (2026-11-12) |
 | Post-E8 delta | ENUM 44/44; SWITCH 13/13; HDM-SEQ 8/8; CASCADE 10/10; PBR 12/12; MEM 14/14; LINUX 21/21 |
 | DTS template + runtime application | `TB_CXL_DTS: ALL PASS (11/11)` |
 | Testcase channel / ioctl / trace / coverage | `TB_CXL_TC: ALL PASS (19/19)`; injected-failure red build `TB_CXL_TC_RED: ALL PASS (3/3)` |

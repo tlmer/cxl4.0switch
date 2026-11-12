@@ -52,6 +52,9 @@ struct CxlEnumDev {
     std::uint64_t bar_base[kMaxBars] = {};
     std::uint32_t bar_size[kMaxBars] = {};
     bool bar_impl[kMaxBars] = {};
+    // Memory BAR prefetchable bit (PCI BAR bit 3), used to choose between
+    // the bridge's memory and prefetchable memory windows.
+    bool bar_pref[kMaxBars] = {};
     // True when the endpoint's config space does not implement BAR sizing
     // (readback all-ones) and the model had to use a fixed fallback aperture.
     bool bar_size_estimated[kMaxBars] = {};
